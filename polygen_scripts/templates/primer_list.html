@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block table %}
+
+<table class="table">
+<thead>
+  <tr>
+    <th scope="col">Oligo</th>
+    <th scope="col">Fragment</th>
+    <th scope="col">Forward</th>
+    <th scope="col">Reverse</th>
+  </tr>
+</thead>
+<tbody>
+{% for fragment in out %}
+<tr>
+  <th scope="row">"oUU"</th>
+  <td> {{fragment.name}} </td>
+  <td> {{fragment.primer_forward}} </td>
+  <td> {{fragment.primer_reverse}} </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

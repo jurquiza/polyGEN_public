@@ -5,15 +5,16 @@
   <div class="jumbotron">
   <h1 class="display-4">PolyGEN</h1>
   <p class="lead"> Automated generation of oligos for production of small RNAs using </p>
-  <hr class="my-4">
-  <p>Next generation automation of Pol-II generated Polycistronic sgRNAs and small RNAs</p>
-  <a class="btn btn-primary btn-lg" href="/sequence" role="button">Start using</a>
-  <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
+  {% block title %}
+  {% endblock %}
 </div>
 </head>
   <body>
 
     {% block content %}
+    {% endblock %}
+
+    {% block table %}
     {% endblock %}
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
