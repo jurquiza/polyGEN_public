@@ -1,5 +1,8 @@
 from flask import Flask, redirect, url_for, render_template, request
+import os
+
 from engine import *
+
 
 app = Flask(__name__)
 
@@ -8,6 +11,11 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return render_template("index.html", content="Testing")
+
+@app.route("/learn")
+def learn():
+    return render_template("learn_more.html", content="Testing")
+
 
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
@@ -27,9 +35,8 @@ def sequence():
             PTG_structure.append(element_list)
         print(PTG_structure)
         out,ftrs = runall(PTG_structure)
-        return render_template("primer_list.html", out=out) 
-        #out[1].primer_forward
-        #return PTG_structure[0][0]+" "+PTG_structure[0][1]+" "+PTG_structure[0][2]
+        return render_template("primer_list.html", out=out)
+
     else:
         return render_template("sequence.html")
 
