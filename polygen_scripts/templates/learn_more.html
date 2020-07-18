@@ -2,15 +2,18 @@
 
 {% block content %}
 
-<h1>PolyGEN</h1>
+<p>
+PolyGEN combines tools for automatic PTG design and automatic prime editing guide RNA design to enable an easy use of polycistronic elements both in the context of prime editing experiments but also for any other setup profiting from polycistron-produced RNAs.
+</p>
+
+<h1>PTG Design Manual</h1>
 
 <p>
-Design automation of polycistronic tRNA-based genes containing custom RNAs for assembly in BsaI-driven Golden Gate experiments. The entire backbone of PolyGEN is based heavily on
-[iBioCAD](https://ibiocad.igb.illinois.edu/) by HamediRad et al. (2019), for which the code is openly available [here](https://github.com/scottweis1/iBioCAD).
+The PTG function offers design automation of polycistronic tRNA-based genes containing custom RNAs for assembly in BsaI-driven Golden Gate experiments. The backbone of the PTG design is based on <a href="https://ibiocad.igb.illinois.edu/">iBioCAD</a> by HamediRad et al. (2019), for which the code is openly available through <a href="https://github.com/scottweis1/iBioCAD">Github</a>.
 </p>
 
 <p>
-PolyGEN combines tools for automatic PTG design and automatic pegRNA design to enable an easy use of polycistronic experiments in the context of prime editing but also in general. To use the PTG design function of PolyGEN, the user must provide a list of the desired custom RNAs to be included in the finished polycistron of the form:
+ To use the PTG design function of PolyGEN, the user must provide a list of the desired custom RNAs to be included in the finished polycistron of the form:
 </p>
 
 
@@ -19,16 +22,16 @@ PolyGEN combines tools for automatic PTG design and automatic pegRNA design to e
 <p class="text-center">...</p>
 
 
-where 'id' is some specific identifier of the part, 'type' is the type of RNAs, which the part belongs to ('gRNA', 'pegRNA' or 'sRNA') and 'sequence' is the entire sequence in 5' -> 3' direction of the part. For instance:
+where 'id' is some specific identifier of the part, 'type' is the type of RNAs, which the part belongs to ('gRNA', 'pegRNA' or 'sRNA') and 'sequence' is the entire sequence in 5' -> 3' direction of the part. Note that 'type' can at this point only be one of the three listed options. Other inputs will lead to errors. An exemplary input would be:
 
 
 <p class="text-center"> g123;gRNA;CGAGGAGCTGTTCA... </p>
 <p class="text-center"> peg456;pegRNA;TATGCTATTCGATC...</p>
 
+<p align="justify">
+From this, it will construct the finished polycistron and calculate all oligomers necessary to produce each singular part via PCR with a plasmid containing a gRNA-tRNA template. The produced parts can then be assembled by Golden Gate. Currently, the produced PTGs can include sgRNAs, pegRNAs and other small RNAs. By default, PolyGEN will use the following parameters, which will be adjustable in future updates:
+</p>
 
-From this, it will construct the finished polycistron and calculate all oligomers necessary to produce each singular part via PCR with a plasmid containing a gRNA-tRNA template. The produced parts can then be assembled by Golden Gate.
-
-Currently, the produced PTGs can include sgRNAs, pegRNAs and other small RNAs. By default, PolyGEN will use the following parameters, which will be adjustable in future updates:
 <p>
 <ul >
 <li> primer melting temperature between 52 and 72 °C if possible </li>
@@ -40,7 +43,7 @@ Currently, the produced PTGs can include sgRNAs, pegRNAs and other small RNAs. B
 
 To calculate the primer melting temperatures, PolyGEN uses the same method and parameters as Benchling: [SantaLucia (1998)](https://www.pnas.org/content/95/4/1460).
 
-<h1>Prime Editing Short Guide RNAs autmated oligo design</h1>
+<h1>Prime Editing Short Guide RNAs Design Manual</h1>
 
 PolyGEN also features a method for automatic design of pegRNAs for desired edits, including specific point mutations, deletions and insertions. Here, the user must supply the sequence which is supposed to be edited with a large enough sequence range around the edit position (at least 50 nucleotides upstream and downstream of any edit) and information about the edit itself:
 
@@ -59,7 +62,7 @@ Each type of edit can span multiple bases and is not restricted to the point mut
 <p class="text-center"> 104,108;106,111;del </p>
 <p class="text-center"> 66;CCA;ins </p>
 
-This input would produce
+Note that similarly to the type input for the PTGs, here the type of mutation can again only be one of "mut", "del" or "ins". Other inputs will lead to errors. The above input list would produce
 
 <p>
 <ul >
