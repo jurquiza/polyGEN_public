@@ -1,12 +1,10 @@
 from flask import Flask, redirect, url_for, render_template, request
 import os
 
-from engine import *
+from engine_v2 import *
 
 
 app = Flask(__name__)
-
-
 
 @app.route("/")
 def home():
@@ -39,6 +37,18 @@ def sequence():
 
     else:
         return render_template("sequence.html")
+
+@app.route("/peg", methods=["POST","GET"])
+def peg_generation():
+    if request.method == "POST":
+        PEG_sequence = request.form["sequence"]
+        PEG_edit = request.form["edits"]
+
+        peg_result = pegbldr(PEG_sequence, PEG_edit)
+
+        return peg_result[0][2]
+    else:
+        return render_template("peg_generation.html")
 
 @app.route("/sucess")
 def success():
