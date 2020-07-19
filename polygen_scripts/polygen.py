@@ -1,8 +1,9 @@
 from flask import Flask, redirect, url_for, render_template, request
 import os
 
-from engine_v2 import *
+from engine_v2_1 import *
 
+session = {}  #here you can store variables that will passed around routes 
 
 app = Flask(__name__)
 
@@ -36,29 +37,30 @@ def sequence():
         return render_template("primer_list.html", out=out)
 
     else:
-        return render_template("sequence.html")
+        print("Went this way")
+        print(session.get('PTG_transfer', None))
+        return render_template("sequence.html",PTG_transfer=session.get('PTG_transfer', None))
 
 @app.route("/peg", methods=["POST","GET"])
 def peg_generation():
     if request.method == "POST":
         PEG_sequence = request.form["sequence"]
         PEG_edits = request.form["edits"]
-        print(PEG_edits)
         PEG_edits = PEG_edits.split(';')
-
-        edit = edit.split(';')
         #determines if the edits are for the correct length
-        if len(edit) % 3:
+        
+        if len(PEG_edits) % 3:
             print('Incorrect')
+            return render_template("peg_generation.html")
         else:
-            number_of_edits = len(edit)/3
+            number_of_edits = len(PEG_edits)/3
             edits_list = []
-            for num_ed in range(0,int(len(edit)/3)):
-                edits_list.append([edit[0+3*num_ed],edit[1+3*num_ed],edit[2+3*num_ed]])
+            for num_ed in range(0,int(len(PEG_edits)/3)):
+                edits_list.append([PEG_edits[0+3*num_ed],PEG_edits[1+3*num_ed],PEG_edits[2+3*num_ed]])
 
-            peg_result = pegbldr(PEG_sequence, PEG_edit)
+            session['PTG_transfer'] = pegbldr(PEG_sequence, edits_list)
 
-        return PEG_edit
+            return redirect(url_for('sequence'))
     else:
         return render_template("peg_generation.html")
 
