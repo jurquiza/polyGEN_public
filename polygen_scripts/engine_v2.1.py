@@ -380,6 +380,7 @@ def pegbldr(sequence, edits):
     edits is an array containing all desired edits in the form [[index of edit, new bases, type of edit],[...]]
     '''
     
+    sequence = sequence.upper()
     plc_seq = sequence[:]
     plc_rev_comp = reverse_complement(plc_seq)
     

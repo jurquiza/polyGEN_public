@@ -2,75 +2,137 @@
 
 {% block content %}
 
-<h1>PolyGEN</h1>
+<style>
+  #page {
+	width: 1024px;
+	margin-left: 2em;
+	margin-right: auto
+  }
 
-<p>
-Design automation of polycistronic tRNA-based genes containing custom RNAs for assembly in BsaI-driven Golden Gate experiments. The entire backbone of PolyGEN is based heavily on
-[iBioCAD](https://ibiocad.igb.illinois.edu/) by HamediRad et al. (2019), for which the code is openly available [here](https://github.com/scottweis1/iBioCAD).
-</p>
+  #description {
+	text-align: center;
+	margin-bottom: 1cm
+  }
 
-<p>
-PolyGEN combines tools for automatic PTG design and automatic pegRNA design to enable an easy use of polycistronic experiments in the context of prime editing but also in general. To use the PTG design function of PolyGEN, the user must provide a list of the desired custom RNAs to be included in the finished polycistron of the form:
-</p>
+  #contents {
+	margin-left: 4em;
+	margin-right: 4em;
+	text-align: justify
+  }
 
+  #code {
+	width: 320px;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: #F2F2F2;
+	margin-bottom: 0.5cm;
+	border-radius: 5px;
+	border-style: solid;
+	border-width: 1px;
+	padding: 5px 10px 5px 10px
+  }
+</style>
 
-<p class="text-center">id0;type0;sequence0</p>
-<p class="text-center">id1;type1;sequence1</p>
-<p class="text-center">...</p>
+<div id=page>
+  <div id=description>
+    <hr style="height:1px;border-width:0;color:gray;background-color:gray">
+    <p>
+    PolyGEN combines tools for automatic PTG design and automatic prime editing guide RNA design to enable an easy use of polycistronic elements both in the context of prime editing experiments but also for any other setup profiting from polycistron-produced RNAs.
+    </p>
+    <hr style="height:1px;border-width:0;color:gray;background-color:gray">
+  </div>
 
+  <div id=contents>
+    <h1 style="color:#2A65AF;">PTG Design Manual</h1>
 
-where 'id' is some specific identifier of the part, 'type' is the type of RNAs, which the part belongs to ('gRNA', 'pegRNA' or 'sRNA') and 'sequence' is the entire sequence in 5' -> 3' direction of the part. For instance:
+    <p>
+    The PTG function offers design automation of polycistronic tRNA-based genes containing custom RNAs for assembly in BsaI-driven Golden Gate experiments. The backbone of the PTG design is based on <a href="https://ibiocad.igb.illinois.edu/">iBioCAD</a> by Scott Weisberg in HamediRad et al. (2019), for which the code is openly available through <a href="https://github.com/scottweis1/iBioCAD">Github</a>.
+    </p>
 
+    <p>
+    To use the PTG design function of PolyGEN, the user must provide a list of the desired custom RNAs to be included in the finished polycistron of the form:
+    </p>
 
-<p class="text-center"> g123;gRNA;CGAGGAGCTGTTCA... </p>
-<p class="text-center"> peg456;pegRNA;TATGCTATTCGATC...</p>
+    <div id=code>
+      id0;type0;sequence0 <br>
+      id1;type1;sequence1 <br>
+      ...
+    </div>
 
+    <p>
+    where 'id' is some specific identifier of the part, 'type' is the type of RNAs, which the part belongs to ('gRNA', 'pegRNA' or 'sRNA') and 'sequence' is the entire sequence of the part in 5' -> 3' direction. Note that 'type' can at this point only be one of the three listed options. Other inputs will lead to errors. An exemplary input would be:
+    </p>
 
-From this, it will construct the finished polycistron and calculate all oligomers necessary to produce each singular part via PCR with a plasmid containing a gRNA-tRNA template. The produced parts can then be assembled by Golden Gate.
+    <div id=code>
+      g123;gRNA;CGAGGAGCTGTTCA... <br>
+      peg456;pegRNA;TATGCTATTCGATC...
+    </div>
 
-Currently, the produced PTGs can include sgRNAs, pegRNAs and other small RNAs. By default, PolyGEN will use the following parameters, which will be adjustable in future updates:
-<p>
-<ul >
-<li> primer melting temperature between 52 and 72 °C if possible </li>
-<li> primer annealing length on template between 12 and 30 nt </li>
-<li> 'tgcc' and 'gttt' as BsaI restriction overlaps with the plasmid</li>
-<li> no additional BsaI restriction sites in the plasmid</li>
-</ul>
-</p>
+    <p>
+    From this, it will construct the finished polycistron and calculate all oligomers necessary to produce each singular part via PCR with a plasmid containing a gRNA-tRNA template. The produced parts can then be assembled by Golden Gate. Currently, the produced PTGs can include sgRNAs, pegRNAs and other small RNAs. By default, PolyGEN will use the following parameters, which will be adjustable in future updates:
+    </p>
 
-To calculate the primer melting temperatures, PolyGEN uses the same method and parameters as Benchling: [SantaLucia (1998)](https://www.pnas.org/content/95/4/1460).
+    <p>
+    <ul >
+    <li> primer melting temperature between 52 and 72 °C if possible </li>
+    <li> primer annealing length on template between 12 and 30 nt </li>
+    <li> 'tgcc' and 'gttt' as BsaI restriction overlaps with the vector plasmid</li>
+    <li> no additional BsaI restriction sites in the plasmid</li>
+    </ul>
+    </p>
 
-<h1>Prime Editing Short Guide RNAs autmated oligo design</h1>
+    <p>
+    To calculate the primer melting temperatures, PolyGEN uses the same method and parameters as Benchling: <a href="https://www.pnas.org/content/95/4/1460">SantaLucia (1998)</a>.
+    </p>
+  </div>
 
-PolyGEN also features a method for automatic design of pegRNAs for desired edits, including specific point mutations, deletions and insertions. Here, the user must supply the sequence which is supposed to be edited with a large enough sequence range around the edit position (at least 50 nucleotides upstream and downstream of any edit) and information about the edit itself:
+  <div id=contents>
+    <h1 style="color:#2A65AF;">Prime Editing Short Guide RNAs Design Manual</h1>
 
-<p>
-<ul >
-<li>  For point mutations, the position of the edit and the desired new base must be supplied </li>
-<li>  For deletions, the positions of first and last bases to be deleted must be supplied </li>
-<li>  For insertions, the position, where the first new base should lie and the bases to be inserted must be supplied </li>
-</ul>
-</p>
+    <p>
+    PolyGEN also features a method for automatic design of pegRNAs for desired edits, including specific point mutations, deletions and insertions. Here, the user must supply the sequence which is supposed to be edited with a large enough sequence range around the edit position (at least 50 nucleotides upstream and downstream of any edit) and information about the edit itself. The following is an input template:
+    </p>
 
-Note, that currently the positions are specified as the indices of an array, meaning that the first position of a sequence is 0.
-Each type of edit can span multiple bases and is not restricted to the point mutation, deletion or insertion of one base per pegRNA. A possible list of inputs could look like this:
+    <div id=code>
+      pos0;base0;type0 <br>
+      pos1;pos2;type1 <br>
+      pos3;base1;type2
+    </div>
 
-<p class="text-center"> 28,30,31;A,T,G;mut </p>
-<p class="text-center"> 104,108;106,111;del </p>
-<p class="text-center"> 66;CCA;ins </p>
+    <p>
+    <ul >
+    <li>  For point mutations (mut), the first input specifies the position of the edit, while the second is one the desired new base </li>
+    <li>  For deletions (del), the first input is the starting and the second input the ending position of bases that should be deleted </li>
+    <li>  For insertions (ins), the first input is the position of insertion and the second the sequence of bases to be inserted </li>
+    </ul>
+    </p>
 
-This input would produce
+    <p>
+    Note, that currently the positions are specified as the indices of an array, meaning that the first position of a sequence is 0. Note also that similarly to the type input for the PTGs, here the type of mutation can again only be one of "mut", "del" or "ins". Other inputs will lead to errors. Each type of edit can span multiple bases and is not restricted to the point mutation, deletion or insertion of one base per pegRNA. A possible list of inputs could look like this:
+    </p>
 
-<p>
-<ul >
-<li>  One pegRNA which changes positions 28 to A, 30 to T and 31 to G </li>
-<li>  One pegRNA which deletes the bases from 104 to 105 (104 and 105) and from 108 to 110 (108, 109 and 110) </li>
-<li>  One pegRNA which inserts the sequence CCA at position 66 </li>
-</ul>
-</p>
+    <div id=code>
+      28,30,31;A,T,G;mut <br>
+      104,108;106,111;del <br>
+      66;CCA;ins
+    </div>
 
-Currently, it is not possible to include edits of different types in one pegRNA
+    <p>
+    The above input list would produce
+    </p>
 
+    <p>
+    <ul >
+    <li>  One pegRNA which changes positions 28 to A, 30 to T and 31 to G </li>
+    <li>  One pegRNA which deletes the bases from 104 to 105 (104 and 105) and from 108 to 110 (108, 109 and 110) </li>
+    <li>  One pegRNA which inserts the sequence CCA at position 66 </li>
+    </ul>
+    </p>
 
+    <p>
+    Currently, it is not possible to include edits of different types in one pegRNA
+    </p>
+  </div>
+</div>
 
 {% endblock %}
