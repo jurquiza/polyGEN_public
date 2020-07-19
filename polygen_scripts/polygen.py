@@ -42,11 +42,23 @@ def sequence():
 def peg_generation():
     if request.method == "POST":
         PEG_sequence = request.form["sequence"]
-        PEG_edit = request.form["edits"]
+        PEG_edits = request.form["edits"]
+        print(PEG_edits)
+        PEG_edits = PEG_edits.split(';')
 
-        peg_result = pegbldr(PEG_sequence, PEG_edit)
+        edit = edit.split(';')
+        #determines if the edits are for the correct length
+        if len(edit) % 3:
+            print('Incorrect')
+        else:
+            number_of_edits = len(edit)/3
+            edits_list = []
+            for num_ed in range(0,int(len(edit)/3)):
+                edits_list.append([edit[0+3*num_ed],edit[1+3*num_ed],edit[2+3*num_ed]])
 
-        return peg_result[0][2]
+            peg_result = pegbldr(PEG_sequence, PEG_edit)
+
+        return PEG_edit
     else:
         return render_template("peg_generation.html")
 
