@@ -430,7 +430,7 @@ def pegbldr(sequence, edits):
             pegPAM_forw = pegPAMs_forw[-1]                       # Extract starting index of last PAM
             pegPAMs_rev = [i.start() for i in pegPAMs_rev]
             pegPAM_rev = pegPAMs_rev[-1]
-            if abs(pegPAM_forw-inds[0]) < abs(pegPAM_rev-(len(seq)-1-inds[-1])): # Of the closest PAM of each strand, which is closest to mutation? -1 because len(x) == ind(x[-1])+1
+            if abs(pegPAM_forw-inds[0]) <= abs(pegPAM_rev-(len(seq)-1-inds[-1])): # Of the closest PAM of each strand, which is closest to mutation? -1 because len(x) == ind(x[-1])+1
                 pegPAM = pegPAM_forw
                 pegPAM_strand = 'f'
             else:
@@ -444,13 +444,16 @@ def pegbldr(sequence, edits):
         if inds[-1]-pegPAM > 30:
                 warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
 
-        pegspacer = seq[pegPAM-20:pegPAM]                        # Spacer should be 20 nt in length and end at PAM (origin: ?)
+        if pegPAM-20 < 0:
+            raise ValueError("The provided sequence does not cover enough area around the edit")
+        else:
+            pegspacer = seq[pegPAM-20:pegPAM]                    # Spacer should be 20 nt in length and end at PAM (origin: ?)
 
         
         # Calculate RT templates depending on type of edit
         if edt[2] == 'mut':                                      # Check if edit is point mutation
             
-            pre_RT_len = max([13, inds[0]-(pegPAM-3)])           # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
+            pre_RT_len = max([13, inds[-1]-(pegPAM-3)])          # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start() # From default length find next D
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]      # Retrieve RT-template
             RT_templ = [i for i in RT_templ]
@@ -460,7 +463,7 @@ def pegbldr(sequence, edits):
                 
         elif edt[2] == 'ins':
             
-            pre_RT_len = max([13, inds[0]-(pegPAM-3)+6])         # template should have additional length 5' of insert to ensure binding
+            pre_RT_len = max([13, inds[-1]-(pegPAM-3)+6])        # template should have additional length 5' of insert to ensure binding
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start()
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]
             RT_templ = [i for i in RT_templ]
