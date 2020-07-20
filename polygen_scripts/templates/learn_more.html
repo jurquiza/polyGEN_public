@@ -54,15 +54,15 @@
     </p>
 
     <div id=code>
-      type0;sequence0|type1;sequence1|type2;sequence2 ...
+      type0;sequence0|type1;sequence1|type2; sequence2 ...
     </div>
 
     <p>
-    where 'type' is the type of RNAs, which the part belongs to ('gRNA', 'pegRNA' or 'sRNA') and 'sequence' is the entire sequence of the part in 5' -> 3' direction. Note that 'type' can at this point only be one of the three listed options. Other inputs will lead to errors. An exemplary input would be:
+    where 'type' is the type of RNAs, which the part belongs to ('gRNA', 'pegRNA' or 'smRNA') and 'sequence' is the entire sequence of the part in 5' -> 3' direction. Note that 'type' can at this point only be one of the three listed options. Other inputs will lead to errors. An exemplary input would be:
     </p>
 
     <div id=code>
-      gRNA;ACGTACGT...|pegRNA;ACGTACGT...
+      gRNA;ACGTACGT...|pegRNA;ACGTACGT ...
     </div>
 
     <p>
@@ -91,7 +91,7 @@
     </p>
 
     <div id=code>
-      pos0;base0;type0|pos1;pos2;type1|pos3;base1;type2 ...
+      pos0;base0;type0|pos1;pos2;type1|pos3; base1;type2 ...
     </div>
 
     <p>
@@ -107,7 +107,7 @@
     </p>
 
     <div id=code>
-      48,50,31;A,T,G;mut|104,108;106,111;del|66;CCA;ins
+      48,50,31;A,T,G;mut|104,108;106,111;del| 66;CCA;ins
     </div>
 
     <p>
