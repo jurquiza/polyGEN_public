@@ -394,35 +394,57 @@ def pegbldr(sequence, edits):
         changes = str(edt[1]).split(',')
 
         
-        # Define pegRNA for editing in forward and reverse strand
+                ## Define pegRNA for editing
+        
+        # Find all PAM motifs in forward and reverse strand in respective possible regions
         pegPAMrgn_forw = seq[:inds[0]+6]                         # Define the region where PAM could possibly lie in forw strand
         pegPAMs_forw = re.finditer(r'(?=(.GG))', pegPAMrgn_forw) # Find all PAMs in region
-        pegPAMs_forw = [i.start() for i in pegPAMs_forw]
-        pegPAM_forw = pegPAMs_forw[-1]                           # Extract starting index of last PAM
         pegPAMrgn_rev = rev_comp[:len(seq)-inds[-1]+6]
         pegPAMs_rev = re.finditer(r'(?=(.GG))', pegPAMrgn_rev)
-        pegPAMs_rev = [i.start() for i in pegPAMs_rev]
-        pegPAM_rev = pegPAMs_rev[-1]
+        pegPAMs_forw = list(pegPAMs_forw)
+        pegPAMs_rev = list(pegPAMs_rev)
         
-        # Find PAM that is closest to mutation
-        if abs(pegPAM_forw-inds[0]) < abs(pegPAM_rev-(len(seq)-1-inds[-1])): # -1 because len(x) == ind(x[-1])+1
-            pegPAM = pegPAM_forw
-            pegPAM_strand = 'f'
-            if abs(inds[-1]-pegPAM) > 30:
-                warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
-                continue
-        else:
+        # Check if usable PAMs are present
+        if pegPAMs_forw == pegPAMs_rev == []:
+            raise ValueError("There are no usable PAM motifs around the edit")
+        
+        # Check if there are PAMs in only one strand
+        elif pegPAMs_forw == []:
+            pegPAMs_rev = [i.start() for i in pegPAMs_rev]
+            pegPAM_rev = pegPAMs_rev[-1]
             pegPAM = pegPAM_rev
             pegPAM_strand = 'r'
-            if abs(pegPAM-(len(seq)-1-inds[0])) > 30:
-                warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
-                continue
             seq = rev_comp[:]
             rev_comp = sequence[:]
-            inds = [len(seq)-i-1 for i in inds]                  # Recalculate mutation indices for rev strand
+            inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
             changes = [complement(i) for i in changes]
+        elif pegPAMs_rev == []:
+            pegPAMs_forw = [i.start() for i in pegPAMs_forw]
+            pegPAM_forw = pegPAMs_forw[-1]                       # Extract starting index of last PAM
+            pegPAM = pegPAM_forw
+            pegPAM_strand = 'f'
         
-        pegspacer = seq[pegPAM-20:pegPAM]                        # Spacer should be 20 nt in length and end at PAM
+        # If there are PAMs in both strands, choose the one closest to edit
+        else:
+            pegPAMs_forw = [i.start() for i in pegPAMs_forw]
+            pegPAM_forw = pegPAMs_forw[-1]                       # Extract starting index of last PAM
+            pegPAMs_rev = [i.start() for i in pegPAMs_rev]
+            pegPAM_rev = pegPAMs_rev[-1]
+            if abs(pegPAM_forw-inds[0]) < abs(pegPAM_rev-(len(seq)-1-inds[-1])): # Of the closest PAM of each strand, which is closest to mutation? -1 because len(x) == ind(x[-1])+1
+                pegPAM = pegPAM_forw
+                pegPAM_strand = 'f'
+            else:
+                pegPAM = pegPAM_rev
+                pegPAM_strand = 'r'
+                seq = rev_comp[:]
+                rev_comp = sequence[:]
+                inds = [len(seq)-i-1 for i in inds]              # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
+                changes = [complement(i) for i in changes]
+        
+        if inds[-1]-pegPAM > 30:
+                warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
+
+        pegspacer = seq[pegPAM-20:pegPAM]                        # Spacer should be 20 nt in length and end at PAM (origin: ?)
 
         
         # Calculate RT templates depending on type of edit
