@@ -37,8 +37,7 @@ def sequence():
         return render_template("primer_list.html", out=out)
 
     else:
-        print("Went this way")
-        print(session.get('PTG_transfer', None))
+
         return render_template("sequence.html",PTG_transfer=session.get('PTG_transfer', None))
 
 @app.route("/peg", methods=["POST","GET"])
@@ -47,7 +46,7 @@ def peg_generation():
         PEG_sequence = request.form["sequence"]
         PEG_edits = request.form["edits"]
         PEG_edits = PEG_edits.split(';')
-        #determines if the edits are for the correct length
+        #determines if the edits are of right lenght
         
         if len(PEG_edits) % 3:
             print('Incorrect')
