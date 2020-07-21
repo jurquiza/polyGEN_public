@@ -2,9 +2,20 @@
 
 {% block title %}
 
+<div class="container">
 <hr class="my-4">
 <p>Next generation automation of Pol-II generated Polycistronic sgRNAs and small RNAs</p>
-<a class="btn btn-primary btn-lg" href="{{ url_for('sequence') }}" role="button">Start using</a>
-<a class="btn btn-primary btn-lg" href="{{ url_for('learn') }}" role="button">Learn more</a>
-
+<div class="container">
+  <div class="row">
+    <div class="col-2">
+    <a class="btn btn-primary btn-lg" href="{{ url_for('sequence') }}" role="button">Start using</a>
+    </div>
+    <div class="col-2">
+    </div>
+    <div class="col-2">
+    <a class="btn btn-primary btn-lg" href="{{ url_for('learn') }}" role="button">Learn more</a>
+    </div>
+   </div>
+  </div>
+</div>
 {% endblock %}

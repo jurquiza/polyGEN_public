@@ -23,13 +23,15 @@
   </div>
 </nav>
 
-
+<div class="container">
   <div class="jumbotron">
   <h1 class="display-4">PolyGEN</h1>
   <p class="lead"> Automated generation of oligos for production of small RNAs using a polycistronic architecture</p>
   {% block title %}
   {% endblock %}
 </div>
+</div>
+
 </head>
   <body>
 
@@ -38,14 +40,42 @@
 
     {% block table %}
     {% endblock %}
-    <div class="container-sm">
-    <img src="{{url_for('static',filename='isbd.png')}}" class="img-thumbnail" alt="Responsive image">
-    <img src="{{url_for('static',filename='hhu.png')}}" class="img-thumbnail" alt="Responsive image">
-    <img src="{{url_for('static',filename='CEPLAS.svg')}}" class="img-thumbnail" alt="Responsive image">
+
+    <div class="container">
+      <div class="row">
+        <hr class="my-4">
+      </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <div class="container-sm">
+      <div class="row">
+        <div class="col-sm">
+        <img src="{{url_for('static',filename='isbd.png')}}" class="img-fluid" alt="Responsive image">
+        </div>
+        <div class="col-sm">
+        <img src="{{url_for('static',filename='hhu.png')}}" class="img-fluid" alt="Responsive image">
+        </div>
+        <div class="col-sm-7">
+        <img src="{{url_for('static',filename='CEPLAS.svg')}}" class="img-fluid" alt="Responsive image">
+        </div>
+    </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <hr class="my-4">
+      </div>
+    </div>
+
+    <div class="container">
+    <footer class="footer mt-auto py-3">
+      <div class="container">
+      <span class="text-muted">PolyGEN was developed within the Cluster of Excellence for on Plant Sciences which is "Gefördert durch die Deustsche Forschungsgemeinschaft (DFG) im Rahmen der Exzellenzstrategie des Bundes und der Läander - EXC-2049/1 - Projektnummer 390686111"</span>
+      </div>
+    </footer>
+    </div>
   </body>
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
 </html>
