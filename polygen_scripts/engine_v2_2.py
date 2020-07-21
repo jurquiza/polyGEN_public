@@ -415,7 +415,7 @@ def pegbldr(sequence, edits):
         rev_comp = plc_rev_comp[:]
         
         inds = [int(i) for i in str(edt[0]).split(',')]
-        changes = str(edt[1]).split(',')
+        changes = str(edt[1]).upper().split(',')
 
         
                 ## Define pegRNA for editing
@@ -541,7 +541,7 @@ def PTGbldr(inserts):
             PTG_parts.append(Part(prt[0], prt[1], str(prt[2])))
             PTG_parts.append(Part('tRNA', 'tRNA', tRNA))
         elif prt[1] == 'gRNA':
-            PTG_parts.append(Part(prt[0], prt[1], str(prt[2]) + tRNA))
+            PTG_parts.append(Part(prt[0], prt[1], str(prt[2]) + scaffld + tRNA))
         elif prt[1] == 'smRNA':
             PTG_parts.append(Part(prt[0], prt[1], str(prt[2]) + tRNA))
     
