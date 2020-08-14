@@ -13,6 +13,9 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
 
+#The following is a copyright notice by the authors of iBioCAD, from which
+#substantial portions of this code were adopted and modified:
+
 #Copyright (c) 2019 Scott Weisberg
 
 #Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,13 +37,12 @@ from Bio.Alphabet import IUPAC
 #SOFTWARE.
 
 
-# Define infrastructure for following code
+#Define infrastructure for the following code
 class Part:
     def __init__(self,name,type,sequence):
         self.name = name
         self.sequence = sequence
         self.type = type
-    description = ""
     primer_forward = ""
     primer_reverse = ""
     bridge_with_next_part = ""
@@ -60,63 +62,7 @@ def builds(parts_list):
     return builds_list
 
 
-# Optimize the overhangs used in Golden Gate assembly
-def golden_gate_optimization(parts_list,gg_overhangs):
-
-    golden_gate_overhangs=gg_overhangs
-    seq_matches = []
-    for x in range(len(parts_list)-1):
-        seq_matches.append([])
-        for overhang in golden_gate_overhangs:
-            if parts_list[x].type == 'pegRNA':
-                if overhang in parts_list[x].sequence[96:]:
-                    seq_matches[x].append(overhang)
-                else:
-                    pass
-            elif parts_list[x].type == 'gRNA':
-                if parts_list[x+1].type == 'gRNA' or parts_list[x+1].type == 'pegRNA':
-                    if overhang in parts_list[x+1].sequence[:20]:
-                        seq_matches[x].append(overhang)
-                    else:
-                        pass
-                elif parts_list[x+1].type == 'smRNA':
-                    if overhang in parts_list[x+1].sequence[:-len(tRNA)]:
-                        seq_matches[x].append(overhang)
-                    else:
-                        pass
-            elif parts_list[x].type == 'smRNA':
-                if parts_list[x+1].type == 'gRNA' or parts_list[x+1].type == 'pegRNA':
-                    if overhang in parts_list[x+1].sequence[:20]:
-                        seq_matches[x].append(overhang)
-                    else:
-                        pass
-                elif parts_list[x+1].type == 'smRNA':
-                    if overhang in parts_list[x+1].sequence[:-len(tRNA)]:
-                        seq_matches[x].append(overhang)
-                    else:
-                        pass
-            else: # if part is tRNA
-                if parts_list[x+1].type == 'gRNA' or parts_list[x+1].type == 'pegRNA':
-                    if overhang in parts_list[x+1].sequence[:20]:
-                        seq_matches[x].append(overhang)
-                    else:
-                        pass
-                elif parts_list[x+1].type == 'smRNA':
-                    if overhang in parts_list[x+1].sequence[:-len(tRNA)]:
-                        seq_matches[x].append(overhang)
-                    else:
-                        pass
-    combs = []
-    for x in itertools.product(*seq_matches):
-        combs.append(x)
-    for comb in combs:
-        if len(comb) == len(set(comb)):
-            return comb
-    # if there are no possible combinations
-    return None
-
-
-# Define functions to easy the main computation
+# Define functions to ease the main computation
 def reverse_complement(sequence):
     rev_comp = ""
     Watson_Crick = {"A":"T","C":"G","T":"A","G":"C","a":"t","t":"a","c":"g","g":"c"}
@@ -137,20 +83,113 @@ def reverse(sequence):
         rev = base + rev
     return rev
 
+def flattn(list_2d):
+    flattnd = []
+    for subl in list_2d:
+        if type(subl) is list:
+            flattnd += [s for s in subl]
+        else:
+            flattnd.append(subl)
+    return flattnd
 
-# set template sequences tRNA and gRNA scaffold
+
+#Optimizes the overhangs used in Golden Gate assembly
+def golden_gate_optimization(parts_list,gg_overhangs):
+
+    # Write all variable sequences in same order in a new list
+    oh_list = []
+    for x in parts_list:
+        if x.type == 'pegRNA':
+            oh_list.append([x.sequence[:20],x.sequence[96:]])
+        elif x.type == 'gRNA':
+            oh_list.append(x.sequence[:20])
+        elif x.type == 'smRNA':
+            oh_list.append(x.sequence[:-len(tRNA)])
+        else: # if part is tRNA
+            oh_list.append('plc')
+    
+    # Starting in the middle of the variable sequences and moving outwards, find overhang combinations
+    for cov in range(2,max([int(np.ceil(np.true_divide(len(prt),2))) for prt in flattn(oh_list)])):
+        
+        cov_list = []
+        for oh in oh_list:
+            if type(oh) is list:
+                o_list = []
+                for o in oh:
+                    if 2*cov >= len(o):
+                        o_list.append(o)
+                    else:
+                        o_list.append(o[int(np.ceil(np.true_divide(len(o),2)))-cov:int(np.ceil(np.true_divide(len(o),2)))+cov])
+                cov_list.append(o_list)
+            else:
+                if 2*cov >= len(oh):
+                    cov_list.append(oh)
+                else:
+                    cov_list.append(oh[int(np.ceil(np.true_divide(len(oh),2)))-cov:int(np.ceil(np.true_divide(len(oh),2)))+cov])
+        
+        # Find possible overhang combinations
+        golden_gate_overhangs=gg_overhangs
+        seq_matches = []
+        for x in range(len(parts_list)-1):
+            seq_matches.append([])
+            for overhang in golden_gate_overhangs:
+                if parts_list[x].type == 'pegRNA':
+                    if overhang in cov_list[x][1]:
+                        seq_matches[x].append(oh_list[x][1][:oh_list[x][1].find(overhang)+4])
+                elif parts_list[x].type == 'gRNA':
+                    if parts_list[x+1].type == 'gRNA':
+                        if overhang in cov_list[x+1]:
+                            seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
+                    elif parts_list[x+1].type == 'pegRNA':
+                        if overhang in cov_list[x+1][0]:
+                            seq_matches[x].append(oh_list[x+1][0][:oh_list[x+1][0].find(overhang)+4])
+                    elif parts_list[x+1].type == 'smRNA':
+                        if overhang in cov_list[x+1]:
+                            seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
+                elif parts_list[x].type == 'smRNA':
+                    if parts_list[x+1].type == 'gRNA':
+                        if overhang in cov_list[x+1]:
+                            seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
+                    elif parts_list[x+1].type == 'pegRNA':
+                        if overhang in cov_list[x+1][0]:
+                            seq_matches[x].append(oh_list[x+1][0][:oh_list[x+1][0].find(overhang)+4])
+                    elif parts_list[x+1].type == 'smRNA':
+                        if overhang in cov_list[x+1]:
+                            seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
+                else: # if part is tRNA
+                    if parts_list[x+1].type == 'gRNA':
+                        if overhang in cov_list[x+1]:
+                            seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
+                    elif parts_list[x+1].type == 'pegRNA':
+                        if overhang in cov_list[x+1][0]:
+                            seq_matches[x].append(oh_list[x+1][0][:oh_list[x+1][0].find(overhang)+4])
+                    elif parts_list[x+1].type == 'smRNA':
+                        if overhang in cov_list[x+1]:
+                            seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
+                  
+        combs = []
+        for x in itertools.product(*seq_matches):
+            combs.append(x)
+        for comb in combs:
+            if len([c[-4:] for c in comb]) == len(set([c[-4:] for c in comb])):
+                return comb
+    #if there are no possible combinations
+    return None
+
+
+# Set template sequences tRNA and gRNA scaffold
 tRNA = 'AACAAAGCACCAGTGGTCTAGTGGTAGAATAGTACCCTGCCACGGTACAGACCCGGGTTCGATTCCCGGCTGGTGCA'
 scaffld = 'GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC'
 
 
-# Perform scarless Golden Gate assembly computation with provided parts
-def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, additional_overhangs):
+# Perform scarless Golden Gate assembly computation
+def scarless_gg(parts_list, primer_tm_range=[52,60], max_annealing_len=30, bb_overlaps=['ggca','gttt'], additional_overhangs=[]):
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
     
-    # format parts list
+    # Format parts list
     builds_list = builds(parts_list)
-
+    
     # Go through parts and write all known annotations into list
     new_builds_list = []
     ftrs = []
@@ -170,7 +209,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                 ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence)-len(tRNA), strand=1), type='smRNA'))
                 ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-len(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
             mmry += len(part.sequence)
-
+        
         # Iterate through overhang sets with increasing size until fitting one is found
         gg_opt = None
         breakit = False
@@ -178,8 +217,13 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
             for q in range(5):
                 with open('overhangsets/setsof%s.csv'%p,'r') as f:
                     reader = csv.reader(f, delimiter=",")
-                    temp = list(reader)[1:]
-                    
+                    sets = list(reader)[1:]
+
+                temp = []
+                for s in sets:
+                    if len(s) != 0:
+                        temp.append(s)
+
                 # Only grab sets that include all existing overhangs and delete the existing from the set
                 if all(i in [x.lower() for x in temp[q]] for i in additional_overhangs+bb_overlaps):
                     free_overhangs = [i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps]
@@ -225,107 +269,105 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                 if breakit:
                     break
         
-        # Raise error if no solution is possible
         if gg_opt is None:
             raise ValueError('The given combination of existing overhangs does not allow for an optimal overhang set.')
                 
-                
         #Modify sequences and design primers
         for i in range(len(unpacked_list)):
-
+            
             # If current part is first part, define forward primer with left backbone overlap and reverse primer ordinarily
             if i == 0:
                 unpacked_list[i].primer_forward = 'taggtctcc' + reverse_complement(bb_overlaps[0]) + unpacked_list[i].sequence[:max_annealing_len]
                 unpacked_list[i].sequence = 'taggtctcc' + reverse_complement(bb_overlaps[0]) + unpacked_list[i].sequence
                 if unpacked_list[i].type == 'pegRNA':
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76-max_annealing_len:unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35)] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35):] + unpacked_list[i+1].sequence[:max_annealing_len]
-                    unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35):] + unpacked_list[i+1].sequence
-                    unpacked_list[i].sequence = unpacked_list[i].sequence[:unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35)] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76-max_annealing_len:unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + unpacked_list[i+1].sequence[:max_annealing_len]
+                    unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + unpacked_list[i+1].sequence
+                    unpacked_list[i].sequence = unpacked_list[i].sequence[:unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + "tgagacccg"
                 elif unpacked_list[i].type == 'gRNA':
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg"
                     if unpacked_list[i+1].type == 'smRNA':
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 elif unpacked_list[i].type == 'smRNA':
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg"
                     if unpacked_list[i+1].type == 'smRNA':
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 else: #part is tRNA
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg"
                     if unpacked_list[i+1].type == 'smRNA':
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
-
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
+            
             # If current part is last part, define reverse primer with right backbone overlap and forward primer ordinarily
             elif i == len(unpacked_list)-1:
                 unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + bb_overlaps[-1] + 'tgagacccg')
                 unpacked_list[i].sequence = unpacked_list[i].sequence + bb_overlaps[-1] + 'tgagacccg'
-
+            
             # If current part is not first or last part, do ordinary computation
             else:
                 if unpacked_list[i].type == 'pegRNA':
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76-max_annealing_len:unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35)] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35):] + unpacked_list[i+1].sequence[:max_annealing_len]
-                    unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35):] + unpacked_list[i+1].sequence
-                    unpacked_list[i].sequence = unpacked_list[i].sequence[:unpacked_list[i].sequence.find(gg_opt[i],len(unpacked_list[i].sequence)-35)] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76-max_annealing_len:unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + unpacked_list[i+1].sequence[:max_annealing_len]
+                    unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i].sequence[unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + unpacked_list[i+1].sequence
+                    unpacked_list[i].sequence = unpacked_list[i].sequence[:unpacked_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + "tgagacccg"
                 elif unpacked_list[i].type == 'gRNA':
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg"
                     if unpacked_list[i+1].type == 'smRNA':
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 elif unpacked_list[i].type == 'smRNA':
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg"
                     if unpacked_list[i+1].type == 'smRNA':
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 else: #part is tRNA
-                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg")
-                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])] + gg_opt[i] + "tgagacccg"
+                    unpacked_list[i].primer_reverse = reverse_complement(unpacked_list[i].sequence[-max_annealing_len:] + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg")
+                    unpacked_list[i].sequence = unpacked_list[i].sequence + unpacked_list[i+1].sequence[:unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + "tgagacccg"
                     if unpacked_list[i+1].type == 'smRNA':
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i]):]
+                        unpacked_list[i+1].primer_forward = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:unpacked_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        unpacked_list[i+1].sequence = "taggtctcc" + unpacked_list[i+1].sequence[unpacked_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
         new_builds_list.append(unpacked_list)
 
     #Optimize primer Tm
     for unpacked_list in new_builds_list:
         for part in unpacked_list:
             
-            # If both Tms are already below the range, find the nearest Gs to create GC clamp
+            # If both Tms are already below the range, find the nearest Gs
             if mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0]:
-                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-re.search('[g,c]', reverse(part.primer_forward)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-re.search('[g,c]', reverse(part.primer_reverse)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                 
-            # If one Tm is below the range, lower the other to make them most similar and find nearest Gs to create CG clamp
+            # If one Tm is below the range, lower the other to make them most similar and find nearest Gs
             elif mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
                 breakit=False
-                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-re.search('[g,c]', reverse(part.primer_forward)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                 for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                    if abs(part.primer_forward_tm-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and part.primer_reverse[j-1] == 'g':
+                    if abs(part.primer_forward_tm-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and part.primer_reverse[j-1] in ['g','c']:
                         part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                         part.primer_reverse = part.primer_reverse[:j]
                         breakit=True
@@ -333,22 +375,22 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                     part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
             elif mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
                 breakit=False
-                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-re.search('[g,c]', reverse(part.primer_reverse)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                 for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                    if abs(part.primer_reverse_tm-mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and part.primer_forward[i-1] == 'g':
+                    if abs(part.primer_reverse_tm-mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and part.primer_forward[i-1] in ['g','c']:
                         part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                         part.primer_forward = part.primer_forward[:i]
                         breakit=True
                 if not breakit:
                     part.primer_forward_tm = mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
             
-            # If both Tms are within or above the range, lower them into the range and make them most similar and find nearest Gs to create GC clamp
+            # If both Tms are within or above the range, lower them into the range and make them most similar and find nearest Gs
             else:
                 breakit=False
                 # Do all of the above
                 for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                     for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                        if abs(mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50))<=5 and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and part.primer_reverse[j-1] == 'g' and part.primer_forward[i-1] == 'g':
+                        if abs(mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50))<=5 and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and part.primer_reverse[j-1] in ['g','c'] and part.primer_forward[i-1] in ['g','c']:
                             part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                             part.primer_forward = part.primer_forward[:i]
                             part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -358,12 +400,11 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                             break
                     if breakit:
                         break
-
                 # Do range and Gs        
                 if not breakit:
                     for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                         for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                            if mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and part.primer_reverse[j-1] == 'g' and part.primer_forward[i-1] == 'g':
+                            if mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and part.primer_reverse[j-1] in ['g','c'] and part.primer_forward[i-1] in ['g','c']:
                                 part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                                 part.primer_forward = part.primer_forward[:i]
                                 part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -373,12 +414,11 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                                 break
                         if breakit:
                             break
-
                 # Do only Gs nearest to range
                 if not breakit:
                     for i in range(len(part.primer_forward)-1-(max_annealing_len-18), len(part.primer_forward)):
                         for j in range(len(part.primer_reverse)-1-(max_annealing_len-18), len(part.primer_reverse)):
-                            if part.primer_reverse[j-1] == 'g' and part.primer_forward[i-1] == 'g':
+                            if part.primer_reverse[j-1] in ['g','c'] and part.primer_forward[i-1] in ['g','c']:
                                 part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                                 part.primer_forward = part.primer_forward[:i]
                                 part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -390,12 +430,12 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                             break
                     
                 if not breakit:
-                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-re.search('[g,c]', reverse(part.primer_forward)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-re.search('[g,c]', reverse(part.primer_reverse)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
     return new_builds_list[0],ftrs
 
 
-def pegbldr(sequence, edits):
+def pegbldr(sequence, edits, mode='PE2'):
     '''
     function that builds the necesary pegRNA and gRNA to accurately introduce a point mutation using the prime editor 
     system.
@@ -427,6 +467,8 @@ def pegbldr(sequence, edits):
         pegPAMs_rev = re.finditer(r'(?=(.GG))', pegPAMrgn_rev)
         pegPAMs_forw = list(pegPAMs_forw)
         pegPAMs_rev = list(pegPAMs_rev)
+        pegPAMs_forw = [i.start() for i in pegPAMs_forw]
+        pegPAMs_rev = [i.start() for i in pegPAMs_rev]
         
         # Check if usable PAMs are present
         if pegPAMs_forw == pegPAMs_rev == []:
@@ -434,8 +476,7 @@ def pegbldr(sequence, edits):
         
         # Check if there are PAMs in only one strand
         elif pegPAMs_forw == []:
-            pegPAMs_rev = [i.start() for i in pegPAMs_rev]
-            pegPAM_rev = pegPAMs_rev[-1]
+            pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
             pegPAM = pegPAM_rev
             pegPAM_strand = 'r'
             seq = rev_comp[:]
@@ -443,18 +484,17 @@ def pegbldr(sequence, edits):
             inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
             changes = [complement(i) for i in changes]
         elif pegPAMs_rev == []:
-            pegPAMs_forw = [i.start() for i in pegPAMs_forw]
-            pegPAM_forw = pegPAMs_forw[-1]                       # Extract starting index of last PAM
+            pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
             pegPAM = pegPAM_forw
             pegPAM_strand = 'f'
         
         # If there are PAMs in both strands, choose the one closest to edit
         else:
-            pegPAMs_forw = [i.start() for i in pegPAMs_forw]
-            pegPAM_forw = pegPAMs_forw[-1]                       # Extract starting index of last PAM
-            pegPAMs_rev = [i.start() for i in pegPAMs_rev]
-            pegPAM_rev = pegPAMs_rev[-1]
-            if abs(pegPAM_forw-inds[0]) <= abs(pegPAM_rev-(len(seq)-1-inds[-1])): # Of the closest PAM of each strand, which is closest to mutation? -1 because len(x) == ind(x[-1])+1
+            forw_min = min([abs(i-1-inds[0]) for i in pegPAMs_forw])
+            rev_min = min([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])
+            pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
+            pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
+            if forw_min <= rev_min: # Of the closest PAM of each strand, which is closest to mutation? -1 because len(x) == ind(x[-1])+1
                 pegPAM = pegPAM_forw
                 pegPAM_strand = 'f'
             else:
@@ -471,7 +511,7 @@ def pegbldr(sequence, edits):
         if pegPAM-20 < 0:
             raise ValueError("The provided sequence does not cover enough area around the edit")
         else:
-            pegspacer = seq[pegPAM-20:pegPAM]                    # Spacer should be 20 nt in length and end at PAM (origin: ?)
+            pegspacer = seq[pegPAM-20:pegPAM]                    # Spacer should be 20 nt in length and end at PAM
 
         
         # Calculate RT templates depending on type of edit
@@ -519,11 +559,37 @@ def pegbldr(sequence, edits):
         pegRNA = pegspacer + scaffld + RT_templ + PBS
         
         out.append(['pegRNA'+str(c), 'pegRNA', pegRNA, pegPAM_strand])
+        
+        ## Define gRNA for PE3
+        if mode == 'PE3':
+            
+            old = []
+            seq = [i for i in seq]
+            for i in range(len(inds)):
+                old.append(seq[inds[i]])
+                seq[inds[i]] = changes[i]
+            seq = ''.join(seq)
+            
+            gPAMrgn = reverse_complement(seq[pegPAM:])     # gRNA must bind to other strand somewhere after pegPAM
+            gPAMs = re.finditer(r'(?=(.GG))', gPAMrgn)     # find all PAMs in that region
+            gPAMs = np.array([i.start() for i in gPAMs])
+            gPAM = gPAMs[abs(np.array(gPAMs)-(len(gPAMrgn)-44)).argmin()] # Find PAM closest to 47 nt upstream of pegPAM nick
+                                                                          # (the gRNA nick should be 50 nt upstream of pegPAM nick)
+
+            gspacer = gPAMrgn[gPAM-20:gPAM]                # Define spacer
+
+            gRNA = gspacer
+
+            out.append(['gRNA'+str(c), 'gRNA', gRNA, pegPAM_strand])
+
+            seq = [i for i in seq]
+            for i in range(len(inds)):
+                seq[inds[i]] = old[i]
+            seq = ''.join(seq)
     
     return out
 
 
-# Define function to create a PTG from a list of parts
 def PTGbldr(inserts):
     '''
     function which takes all desired parts of PTG GG assembly and gives out the respective inserts for PTG. During the 
@@ -559,16 +625,11 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
         oligos.append(o.primer_forward)
         oligos.append(o.primer_reverse)
         if c == 0:
-            full_sequence += o.sequence[13:-13]
+            full_sequence += o.sequence[:-13]
+        elif c == len(outpt)-1:
+            full_sequence += o.sequence[9:]
         else:
             full_sequence += o.sequence[9:-13]
 
+    return outpt,full_sequence# ,oligos,feat
 
-    return outpt,full_sequence
-
-
-#full_test = [['gRNA0', 'gRNA', 'CGATTCGGCATAACGATCCC'+scaffld.upper(), 'f'],
-#             ['pegRNA0', 'pegRNA', 'CGAGGAGCTGTTCACCGGGGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCAGGATTGGCACCACCCCGGTGAACAGCTC', 'f'],
-#             ['smRNA0', 'smRNA', 'GCTTAGATCGGATCCAAGCTA']]
-
-#output,seq = runall(full_test)
