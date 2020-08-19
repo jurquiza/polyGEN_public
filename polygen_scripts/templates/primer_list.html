@@ -13,7 +13,7 @@
 <tbody>
 {% for fragment in out %}
 <tr>
-  <th scope="row">"oUU"</th>
+  <th scope="row" > {{session['PTG_oligo']}}{{loop.index0}} </th>
   <td> {{fragment.name}} </td>
   <td> {{fragment.primer_forward}} </td>
   <td> {{fragment.primer_reverse}} </td>

@@ -19,8 +19,18 @@ def learn():
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
     if request.method == "POST":
+        runall_args = {}
         PTG_input = request.form["sequence_spacers"]
         PTG_name = request.form["PTG_name"]
+        session['PTG_oligo'] = request.form["oligo_prefix"]
+        if request.form['tm_range']:
+            runall_args['tm_range'] = [int(i) for i in request.form['tm_range'].split('-')]
+        if request.form['max_len']:
+            runall_args['max_ann_len'] = int(request.form['max_len'])
+        if request.form['bb_ovrhng']:
+            runall_args['bb_overlaps'] = request.form['bb_ovrhng'].split(';')
+        if request.form['add_ovrhng']:
+            runall_args['additional_overhangs'] = request.form['add_ovrhng'].split(';')
         PTG_input = PTG_input.split('|')
         PTG_structure = []
         PTG_index=1
@@ -33,8 +43,8 @@ def sequence():
 
             PTG_structure.append(element_list)
         print(PTG_structure)
-        out,ftrs = runall(PTG_structure)
-        return render_template("primer_list.html", out=out)
+        out,ftrs = runall(PTG_structure, **runall_args)
+        return render_template("primer_list.html", out=out, session=session)
 
     else:
 

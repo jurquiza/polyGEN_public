@@ -1,29 +1,69 @@
 {% extends "base.html" %}
 
-{% block title %} Polycistronic RNA prodcution {% endblock %}
+{% block title %} Polycistronic RNA production {% endblock %}
 
 {% block content %}
 <div class="container">
 <form action='#' method='post'>
-  <div class="form-group">
-    <label for="exampleFormControlInput1">Polycistron Name</label>
-    <input type="text" name="PTG_name" class="form-control" id="exampleFormControlInput1" placeholder="e.g. pegUU">
+  <div class="row">
+    <div class="col-6">
+      <div class="form-group">
+        <label for="exampleFormControlInput1">Polycistron Name</label>
+        <input type="text" name="PTG_name" class="form-control" id="exampleFormControlInput1" placeholder="e.g. pegUU">
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="form-group">
+        <label for="exampleFormControlInput2">Oligos prefix</label>
+        <input type="text" name="oligo_prefix" class="form-control" id="exampleFormControlInput2" placeholder="e.g. oUU">
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-3">
+      <div class="form-group">
+        <label for="exampleFormControlInputTm">Temperature range</label>
+        <input type="text" name="tm_range" class="form-control" id="exampleFormControlInputTm" placeholder="52-72">
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="form-group">
+        <label for="exampleFormControlInputLen">Maximal static annealing length</label>
+        <input type="number" name="max_len" class="form-control" id="exampleFormControlInputLen" placeholder="30">
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="form-group">
+        <label for="exampleFormControlInputbb">Left and right overhangs of the bb</label>
+        <input type="text" name="bb_ovrhng" class="form-control" id="exampleFormControlInputbb" placeholder="tgcc;gttt">
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="form-group">
+        <label for="exampleFormControlInputAdd">Additional BsaI overhangs</label>
+        <input type="text" name="add_ovrhng" class="form-control" id="exampleFormControlInputAdd" placeholder="None">
+      </div>
+    </div> 
+  </div>   
+
+  <div class="row">
+    <div class="col-12">
+      <div class="form-group">
+        <label for="exampleFormControlTextarea1">PTG description (input)</label>
+        {% if PTG_transfer %}
+            <textarea class="form-control" name="sequence_spacers" id="exampleFormControlTextarea3" rows="5"
+        placeholder='e.g. A'>{{ PTG_transfer[0][1] }};{{ PTG_transfer[0][2] }}</textarea>
+        {% else %}
+            <textarea class="form-control" name="sequence_spacers" id="exampleFormControlTextarea3" rows="5"
+        placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC'></textarea>
+        {% endif %}
+      </div>
+    </div>
   </div>
   <div class="form-group">
-    <label for="exampleFormControlInput1">Oligos prefix</label>
-    <input type="text" name="oligo_prefix" class="form-control" id="exampleFormControlInput2" placeholder="e.g. oUU">
+    <button type="submit" class="btn btn-primary">Submit</button>
   </div>
-  <div class="form-group">
-    <label for="exampleFormControlTextarea1">PTG description (input)</label>
-    {% if PTG_transfer %}
-        <textarea class="form-control" name="sequence_spacers" id="exampleFormControlTextarea3" rows="5"
-    placeholder='e.g. A'>{{ PTG_transfer[0][1] }};{{ PTG_transfer[0][2] }}</textarea>
-    {% else %}
-        <textarea class="form-control" name="sequence_spacers" id="exampleFormControlTextarea3" rows="5"
-    placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC'></textarea>
-    {% endif %}
-  </div>
-  <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 </div>
 
