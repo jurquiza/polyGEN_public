@@ -3,7 +3,8 @@ import os
 
 from engine_v2_2 import *
 
-session = {}  #here you can store variables that will passed around routes 
+session = {}  #here you can store variables that will be passed around routes 
+session['msg'] = None
 
 app = Flask(__name__)
 
@@ -21,10 +22,10 @@ def sequence():
     if request.method == "POST":
         runall_args = {}
         PTG_input = request.form["sequence_spacers"]
+        session['PTG_transfer'] = PTG_input
         PTG_name = request.form["PTG_name"]
         session['PTG_oligo'] = request.form["oligo_prefix"]
-        if request.form['tm_range']:
-            runall_args['tm_range'] = [int(i) for i in request.form['tm_range'].split('-')]
+        runall_args['tm_range'] = [int(request.form['min_temp'][:2]), int(request.form['max_temp'][:2])]
         if request.form['max_len']:
             runall_args['max_ann_len'] = int(request.form['max_len'])
         if request.form['bb_ovrhng']:
@@ -40,10 +41,12 @@ def sequence():
             PTG_index+=1
             for e in element.split(';'):
                 element_list.append(e)
-
             PTG_structure.append(element_list)
-        print(PTG_structure)
-        out,ftrs = runall(PTG_structure, **runall_args)
+
+        out,ftrs,session['msg'] = runall(PTG_structure, **runall_args)
+        if session['msg'] == 'comb_error':
+            return render_template("sequence.html", PTG_transfer=session.get('PTG_transfer', None), session=session)
+        
         return render_template("primer_list.html", out=out, session=session)
 
     else:
@@ -67,7 +70,7 @@ def peg_generation():
             for num_ed in range(0,int(len(PEG_edits)/3)):
                 edits_list.append([PEG_edits[0+3*num_ed],PEG_edits[1+3*num_ed],PEG_edits[2+3*num_ed]])
 
-            session['PTG_transfer'] = pegbldr(PEG_sequence, edits_list)
+            session['PTG_transfer'] = str(pegbldr(PEG_sequence, edits_list)[0][1]) + ';' +  str(pegbldr(PEG_sequence, edits_list)[0][2])
 
             return redirect(url_for('sequence'))
     else:

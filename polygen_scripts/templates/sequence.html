@@ -8,41 +8,48 @@
   <div class="row">
     <div class="col-6">
       <div class="form-group">
-        <label for="exampleFormControlInput1">Polycistron Name</label>
-        <input type="text" name="PTG_name" class="form-control" id="exampleFormControlInput1" placeholder="e.g. pegUU">
+        <label for="ControlInput1">Polycistron Name</label>
+        <input type="text" name="PTG_name" class="form-control" id="ControlInput1" placeholder="e.g. pegUU">
       </div>
     </div>
     <div class="col-6">
       <div class="form-group">
-        <label for="exampleFormControlInput2">Oligos prefix</label>
-        <input type="text" name="oligo_prefix" class="form-control" id="exampleFormControlInput2" placeholder="e.g. oUU">
+        <label for="ControlInput2">Oligos prefix</label>
+        <input type="text" name="oligo_prefix" class="form-control" id="ControlInput2" placeholder="e.g. oUU">
       </div>
     </div>
   </div>
 
   <div class="row">
-    <div class="col-3">
+    <div class="col-5">
+      <label for="slider-input">T<sub>M</sub> range</label>
+      <script src="//cdn.bootcss.com/noUiSlider/8.5.1/nouislider.js"></script>
+      <div id="slider"></div>
+    </div>
+    <div class="col-1">
       <div class="form-group">
-        <label for="exampleFormControlInputTm">Temperature range</label>
-        <input type="text" name="tm_range" class="form-control" id="exampleFormControlInputTm" placeholder="52-72">
+        <input type="number" name="min_temp" class="form-control" id="ControlInputMinT">
+      </div>
+      <div class="form-group">
+        <input type="number" name="max_temp" class="form-control" id="ControlInputMaxT">
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-2">
       <div class="form-group">
-        <label for="exampleFormControlInputLen">Maximal static annealing length</label>
-        <input type="number" name="max_len" class="form-control" id="exampleFormControlInputLen" placeholder="30">
+        <label for="ControlInputLen">Max. static ann. len.</label>
+        <input type="number" name="max_len" class="form-control" id="ControlInputLen" placeholder="30">
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-2">
       <div class="form-group">
-        <label for="exampleFormControlInputbb">Left and right overhangs of the bb</label>
-        <input type="text" name="bb_ovrhng" class="form-control" id="exampleFormControlInputbb" placeholder="tgcc;gttt">
+        <label for="ControlInputbb">Border overhangs</label>
+        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt">
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-2">
       <div class="form-group">
-        <label for="exampleFormControlInputAdd">Additional BsaI overhangs</label>
-        <input type="text" name="add_ovrhng" class="form-control" id="exampleFormControlInputAdd" placeholder="None">
+        <label for="ControlInputAdd">Additional overhangs</label>
+        <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None">
       </div>
     </div> 
   </div>   
@@ -50,12 +57,14 @@
   <div class="row">
     <div class="col-12">
       <div class="form-group">
-        <label for="exampleFormControlTextarea1">PTG description (input)</label>
+        <label for="ControlTextarea1">PTG description (input)</label>
+        {% if session['msg'] == 'comb_error' %}
+            <p style="color:red;">The variable sequences of these parts are not compatible with any experimentally validated overhang combinations</p>
+        {% endif %}
         {% if PTG_transfer %}
-            <textarea class="form-control" name="sequence_spacers" id="exampleFormControlTextarea3" rows="5"
-        placeholder='e.g. A'>{{ PTG_transfer[0][1] }};{{ PTG_transfer[0][2] }}</textarea>
+        <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC'>{{PTG_transfer}}</textarea>
         {% else %}
-            <textarea class="form-control" name="sequence_spacers" id="exampleFormControlTextarea3" rows="5"
+            <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5"
         placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC'></textarea>
         {% endif %}
       </div>

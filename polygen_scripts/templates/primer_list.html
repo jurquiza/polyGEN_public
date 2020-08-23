@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block table %}
 
+{% if session['msg']=='comb_warn' %}
+  <p style="color:red;">The given combination of existing overhangs is not compatible with an optimal overhang set. Computed the best overhang set not including the given existing overhangs. There might be interference between overhangs. </p>
+{% endif %}
 <table class="table">
 <thead>
   <tr>
