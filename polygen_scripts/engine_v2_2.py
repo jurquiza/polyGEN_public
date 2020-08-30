@@ -513,6 +513,7 @@ def pegbldr(sequence, edits, mode='PE2'):
             raise ValueError("The provided sequence does not cover enough area around the edit")
         else:
             pegspacer = seq[pegPAM-20:pegPAM]                    # Spacer should be 20 nt in length and end at PAM
+        PBS = reverse_complement(seq[pegPAM-16:pegPAM-3]) # PBS must be in opposite direction
 
         
         # Calculate RT templates depending on type of edit
@@ -554,8 +555,6 @@ def pegbldr(sequence, edits, mode='PE2'):
         RT_templ = ''.join(RT_templ)
         
         RT_templ = reverse_complement(RT_templ)        # RT-template must be in opposite direction
-                                                               
-        PBS = reverse_complement(seq[pegPAM-16:pegPAM-3]) # PBS must be in opposite direction
         
         pegRNA = pegspacer + scaffld + RT_templ + PBS
         
