@@ -58,21 +58,21 @@ def peg_generation():
     if request.method == "POST":
         PEG_sequence = request.form["sequence"]
         PEG_edits = request.form["edits"]
-        PEG_edits = PEG_edits.split(';')
-        #determines if the edits are of right lenght
-        
-        if len(PEG_edits) % 3:
-            print('Incorrect')
-            return render_template("peg_generation.html")
-        else:
-            number_of_edits = len(PEG_edits)/3
-            edits_list = []
-            for num_ed in range(0,int(len(PEG_edits)/3)):
-                edits_list.append([PEG_edits[0+3*num_ed],PEG_edits[1+3*num_ed],PEG_edits[2+3*num_ed]])
+        PEG_edits = PEG_edits.split('|')
 
-            session['PTG_transfer'] = str(pegbldr(PEG_sequence, edits_list)[0][1]) + ';' +  str(pegbldr(PEG_sequence, edits_list)[0][2])
+        pegs_list = []
+        for edt in PEG_edits:
+            pegs_list.append(edt.split(';'))
 
-            return redirect(url_for('sequence'))
+        edits_list = pegbldr(PEG_sequence, pegs_list)
+
+        session['PTG_transfer'] = ''
+        for c,peg in enumerate(edits_list):
+            session['PTG_transfer'] += str(peg[1]) + ';' +  str(peg[2])
+            if c < len(edits_list)-1:
+                session['PTG_transfer'] += '|'
+
+        return redirect(url_for('sequence'))
     else:
         return render_template("peg_generation.html")
 
