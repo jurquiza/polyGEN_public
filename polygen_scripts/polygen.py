@@ -59,12 +59,13 @@ def peg_generation():
         PEG_sequence = request.form["sequence"]
         PEG_edits = request.form["edits"]
         PEG_edits = PEG_edits.split('|')
+        PEG_mode = request.form["mode"]
 
         pegs_list = []
         for edt in PEG_edits:
             pegs_list.append(edt.split(';'))
 
-        edits_list = pegbldr(PEG_sequence, pegs_list)
+        edits_list = pegbldr(PEG_sequence, pegs_list, PEG_mode)
 
         session['PTG_transfer'] = ''
         for c,peg in enumerate(edits_list):
