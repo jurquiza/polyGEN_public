@@ -9,8 +9,23 @@
     placeholder='e.g. 100 bp sequence'></textarea>
   </div>
   <div class="form-group">
-    <label for="exampleFormControlInput1">PEG edits</label>
-    <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut">
+    <div class="row">
+      <div class="col-11">
+        <label for="exampleFormControlInput1">PEG edits</label>
+        <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut">
+      </div>
+      <div class="col-1">
+        <div class="row">
+        <label for="exampleFormControlInput2">PEG mode</label>
+        </div>
+        <div class="row">
+        <select id="mode" name="mode">
+          <option value="PE2">PE2</option>
+          <option value="PE3">PE3</option>
+        </select>
+        </div>
+      </div>
+    </div>
   </div>
   <button type="submit" class="btn btn-primary">Submit</button>
 </form>

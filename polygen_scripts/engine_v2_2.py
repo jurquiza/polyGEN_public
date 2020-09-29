@@ -183,8 +183,9 @@ tRNA = 'AACAAAGCACCAGTGGTCTAGTGGTAGAATAGTACCCTGCCACGGTACAGACCCGGGTTCGATTCCCGGCTG
 scaffld = 'GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC'
 
 
-# Perform scarless Golden Gate assembly computation
-def scarless_gg(parts_list, primer_tm_range=[52,60], max_annealing_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[]):
+# Perform scarless Golden Gate assembly computation with provided parts
+def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, additional_overhangs):
+    msg = None
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
     
@@ -241,7 +242,7 @@ def scarless_gg(parts_list, primer_tm_range=[52,60], max_annealing_len=30, bb_ov
         
         # No sets include all existing overhangs
         if gg_opt is None:
-            
+            msg = 'comb_warn'
             warnings.warn('The given combination of existing overhangs is not compatible with an optimal overhang set. '
                           'Computing the best overhang set not including the given existing overhangs. There might be '
                           'interference between overhangs.')
@@ -271,7 +272,9 @@ def scarless_gg(parts_list, primer_tm_range=[52,60], max_annealing_len=30, bb_ov
                     break
         
         if gg_opt is None:
-            raise ValueError('The given combination of existing overhangs does not allow for an optimal overhang set.')
+            msg = 'comb_error'
+            return None,None,msg
+
 
         #Modify sequences and design primers
         for i in range(len(unpacked_list)):
@@ -431,9 +434,9 @@ def scarless_gg(parts_list, primer_tm_range=[52,60], max_annealing_len=30, bb_ov
                             break
                     
                 if not breakit:
-                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-re.search('[g,c]', reverse(part.primer_forward)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-re.search('[g,c]', reverse(part.primer_reverse)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-    return new_builds_list[0],ftrs
+                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+    return new_builds_list[0],ftrs,msg
 
 
 def pegbldr(sequence, edits, mode='PE2'):
@@ -616,20 +619,20 @@ def PTGbldr(inserts):
 
 # Execute computation
 def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[]):
-    PTG = PTGbldr(arr)
-    outpt,feat = scarless_gg(PTG, tm_range, max_ann_len, bb_overlaps, additional_overhangs)
-
-    oligos = []
+    msg = None
     full_sequence = ''
-    for c,o in enumerate(outpt):
-        oligos.append(o.primer_forward)
-        oligos.append(o.primer_reverse)
-        if c == 0:
-            full_sequence += o.sequence[:-13]
-        elif c == len(outpt)-1:
-            full_sequence += o.sequence[9:]
-        else:
-            full_sequence += o.sequence[9:-13]
+    PTG = PTGbldr(arr)
+    outpt,feat,msg = scarless_gg(PTG, tm_range, max_ann_len, bb_overlaps, additional_overhangs)
+    
+    if outpt is not None:
+        oligos = []
+        for c,o in enumerate(outpt):
+            oligos.append(o.primer_forward)
+            oligos.append(o.primer_reverse)
+            if c == 0:
+                full_sequence += o.sequence[13:-13]
+            else:
+                full_sequence += o.sequence[9:-13]
 
-    return outpt,full_sequence# ,oligos,feat
+    return outpt,full_sequence,msg
 
