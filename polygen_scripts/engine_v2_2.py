@@ -37,6 +37,28 @@ from Bio.Alphabet import IUPAC
 #SOFTWARE.
 
 
+def make_session_id():
+        id_one = {1:'A',2:'B',3:'C',4:'D',5:'E',
+        6:'F',7:'G',8:'H',9:'I',10:'J',11:'K',
+        12:'L',13:'M',14:'N',15:'O',16:'P',
+        17:'Q',18:'R',19:'S',20:'T',
+        21:'U',22:'V',23:'W',24:'X',25:'Y',
+        26:'Z'
+        }
+        id_two = {1:'A',2:'B',3:'C',4:'D',5:'E',
+        6:'F',7:'G',8:'H',9:'I',10:'J',11:'K',
+        12:'L',13:'M',14:'N',15:'O',16:'P',
+        17:'Q',18:'R',19:'S',20:'T',
+        21:'U',22:'V',23:'W',24:'X',25:'Y',
+        26:'Z'
+        }
+        from random import randrange
+        import time
+        two = id_two[randrange(1,27)]
+        one = id_one[randrange(1,27)]
+        number = str(randrange(0,999999999999))
+        return one+two+number
+
 #Define infrastructure for the following code
 class Part:
     def __init__(self,name,type,sequence):
@@ -360,28 +382,45 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
     #Optimize primer Tm
     for unpacked_list in new_builds_list:
         for part in unpacked_list:
+            score_forw = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_forward]
+            score_rev = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_reverse]
+            print(score_forw)
+            breakit=False
             
             # If both Tms are already below the range, find the nearest Gs
             if mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0]:
-                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-re.search('[g,c]', reverse(part.primer_forward)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-re.search('[g,c]', reverse(part.primer_reverse)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                print("if 1")
+                for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
+                    if sum(score_forw[i-5:i]) in [1,2]:
+                        part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                        part.primer_forward = part.primer_forward[:i]
+                for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
+                    if sum(score_rev[j-5:j]) in [1,2]:
+                        part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                        part.primer_reverse = part.primer_reverse[:j]
                 
             # If one Tm is below the range, lower the other to make them most similar and find nearest Gs
             elif mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-                breakit=False
-                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-re.search('[g,c]', reverse(part.primer_forward)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                print("if 2.1")
+                for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
+                    if sum(score_forw[i-5:i]) in [1,2]:
+                        part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                        part.primer_forward = part.primer_forward[:i]
                 for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                    if abs(part.primer_forward_tm-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and part.primer_reverse[j-1] in ['g','c']:
+                    if abs(part.primer_forward_tm-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and sum(score_rev[j-5:j]) in [1,2]:
                         part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                         part.primer_reverse = part.primer_reverse[:j]
                         breakit=True
                 if not breakit:
                     part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
             elif mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-                breakit=False
-                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-re.search('[g,c]', reverse(part.primer_reverse)).start()], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                print("if 2.2")
+                for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
+                    if sum(score_rev[j-5:j]) in [1,2]:
+                        part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+                        part.primer_reverse = part.primer_reverse[:j]
                 for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                    if abs(part.primer_reverse_tm-mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and part.primer_forward[i-1] in ['g','c']:
+                    if abs(part.primer_reverse_tm-mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and sum(score_forw[j-5:i]) in [1,2]:
                         part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                         part.primer_forward = part.primer_forward[:i]
                         breakit=True
@@ -390,11 +429,13 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
             
             # If both Tms are within or above the range, lower them into the range and make them most similar and find nearest Gs
             else:
+                print("else")
                 breakit=False
                 # Do all of the above
                 for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                     for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                        if abs(mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50))<=5 and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and part.primer_reverse[j-1] in ['g','c'] and part.primer_forward[i-1] in ['g','c']:
+                        if abs(mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50))<=5 and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
+                            print("if 3")
                             part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                             part.primer_forward = part.primer_forward[:i]
                             part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -408,7 +449,8 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                 if not breakit:
                     for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                         for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                            if mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and part.primer_reverse[j-1] in ['g','c'] and part.primer_forward[i-1] in ['g','c']:
+                            if mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
+                                print("if 4")
                                 part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                                 part.primer_forward = part.primer_forward[:i]
                                 part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -422,7 +464,8 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                 if not breakit:
                     for i in range(len(part.primer_forward)-1-(max_annealing_len-18), len(part.primer_forward)):
                         for j in range(len(part.primer_reverse)-1-(max_annealing_len-18), len(part.primer_reverse)):
-                            if part.primer_reverse[j-1] in ['g','c'] and part.primer_forward[i-1] in ['g','c']:
+                            if sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
+                                print("if 5")
                                 part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                                 part.primer_forward = part.primer_forward[:i]
                                 part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -434,6 +477,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                             break
                     
                 if not breakit:
+                    print("nobreakit")
                     part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                     part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
     return new_builds_list[0],ftrs,msg
@@ -568,6 +612,7 @@ def pegbldr(sequence, edits, mode='PE2'):
             
             old = []
             seq = [i for i in seq]
+
             for i in range(len(inds)):
                 old.append(seq[inds[i]])
                 seq[inds[i]] = changes[i]
@@ -606,6 +651,7 @@ def PTGbldr(inserts):
     
     ## Take each coding sequence of the output and append it with a tRNA to the list
     for c,prt in enumerate(inserts):
+        print(prt)
         if prt[1] == 'pegRNA':
             PTG_parts.append(Part(prt[0], prt[1], str(prt[2])))
             PTG_parts.append(Part('tRNA', 'tRNA', tRNA))
@@ -634,5 +680,5 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
             else:
                 full_sequence += o.sequence[9:-13]
 
-    return outpt,full_sequence,msg
+    return outpt,full_sequence,msg,oligos
 

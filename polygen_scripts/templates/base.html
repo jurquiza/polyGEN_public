@@ -1,5 +1,36 @@
 <!doctype html>
 <html>
+<style>
+img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.fluid {
+    width: auto;
+    max-height: 100%;
+}
+footer {
+    background-color: DarkGrey;
+    color: white;
+}
+.ui.blue.buttons .button,
+.ui.blue.button {
+  background-color: #6ECFF5!important;
+  color: #FFFFFF;
+  text-shadow: none;
+  background-image: none;
+  border-radius: 0.4em;
+  padding-left: .5em;
+  padding-right: .5em;
+  padding-top: .2em;
+  padding-bottom: .2em;
+}
+.ui.blue.buttons .button:hover,
+.ui.blue.button:hover {
+  background-color: #1AB8F3!important;
+}
+</style>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -25,6 +56,9 @@
       </li>
     </ul>
   </div>
+  <img src="{{url_for('static',filename='isbd.png')}}" class="fluid" height="45" hspace="5" alt="Institute of Synthetic Biology logo">
+  <img src="{{url_for('static',filename='hhu.png')}}" class="fluid" height="45" hspace="5" alt="Heinrich-Heine University logo">
+  <img src="{{url_for('static',filename='CEPLAS.svg')}}" class="fluid" height="45" hspace="5" alt="CEPLAS logo">
 </nav>
 </div>
 
@@ -32,6 +66,7 @@
   <div class="jumbotron">
   <h1 class="display-4">PolyGEN</h1>
   <p class="lead"> Automated generation of oligos for production of small RNAs using a polycistronic architecture</p>
+  <hr class="my-4">
   {% block title %}
   {% endblock %}
   </div>
@@ -51,32 +86,13 @@
         <hr class="my-4">
       </div>
     </div>
-
-    <div class="container-sm">
-      <div class="row">
-        <div class="col-sm">
-        <img src="{{url_for('static',filename='isbd.png')}}" class="img-fluid" alt="Responsive image">
-        </div>
-        <div class="col-sm">
-        <img src="{{url_for('static',filename='hhu.png')}}" class="img-fluid" alt="Responsive image">
-        </div>
-        <div class="col-sm-7">
-        <img src="{{url_for('static',filename='CEPLAS.svg')}}" class="img-fluid" alt="Responsive image">
-        </div>
-    </div>
-    </div>
-
-    <div class="container">
-      <div class="row">
-        <hr class="my-4">
-      </div>
-    </div>
-
-
+    
     <footer class="container mt-auto py-3">
       <div class="row">
-      <p>PolyGEN was developed within the Cluster of Excellence for on Plant Sciences which is "Gefördert durch die Deutsche Forschungsgemeinschaft (DFG) im Rahmen der
+        <div class="col">
+          <p>PolyGEN was developed within the Cluster of Excellence for on Plant Sciences which is "Gefördert durch die Deutsche Forschungsgemeinschaft (DFG) im Rahmen der
         Exzellenzstrategie des Bundes und der Länder - EXC-2049/1 - Projektnummer 390686111"</p>
+        </div>
       </div>
     </footer>
 
