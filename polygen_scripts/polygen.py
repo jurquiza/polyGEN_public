@@ -22,6 +22,7 @@ def learn():
 def sequence():
     if request.method == "POST":
         runall_args = {}
+        runall_args['poltype_run'] = request.form["poltype_input"]
         PTG_input = request.form["sequence_spacers"]
         session['PTG_transfer'] = PTG_input
         session['PTG_oligo'] = request.form["oligo_prefix"]

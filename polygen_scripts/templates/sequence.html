@@ -7,6 +7,17 @@
 <div class="container">
 <form action='#' method='post'>
   <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="polyType">Type of polycistronic architecture</label>
+        <select name="poltype_input" id="poltype_input">
+          <option value="ptg">PTG</option>
+          <option value="cpf1">Cpf1</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="row">
     <div class="col-6">
       <div class="form-group">
         <label for="ControlInput1">Polycistron Name</label>
@@ -21,7 +32,7 @@
     </div>
     <div class="col-3">
       <div class="form-group">
-        <label for="ControlInput2">Starting index</label>
+        <label for="Input_oli_index">Starting index</label>
         <input type="text" name="oligo_index" class="form-control" id="Input_oli_index" placeholder="e.g. 0291">
       </div>
     </div>
