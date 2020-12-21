@@ -60,6 +60,21 @@ def make_session_id():
         return one+two+number
 
 #Define infrastructure for the following code
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
+
 class Part:
     def __init__(self,name,type,sequence):
         self.name = name
@@ -291,6 +306,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
         # No sets include all existing overhangs
         if gg_opt is None:
             msg = 'comb_warn'
+            print(1)
             warnings.warn('The given combination of existing overhangs is not compatible with an optimal overhang set. '
                           'Computing the best overhang set not including the given existing overhangs. There might be '
                           'interference between overhangs.')
@@ -313,15 +329,15 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                     else:
                         continue
 
-                gg_opt = golden_gate_optimization(unpacked_list, free_overhangsets, poltype_gg)
+                if free_overhangsets:
+                    gg_opt = golden_gate_optimization(unpacked_list, free_overhangsets, poltype_gg)
                 if gg_opt is not None:
                     breakit = True
                 if breakit:
                     break
         
         if gg_opt is None:
-            msg = 'comb_error'
-            return None,None,msg
+            raise InvalidUsage("No combination of optimal linkers possible for the provided existing linkers", status_code=400, payload={'pge': 'sequence.html'})
 
 
         #Modify sequences and design primers
@@ -445,12 +461,10 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
         for part in unpacked_list:
             score_forw = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_forward]
             score_rev = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_reverse]
-            print(score_forw)
             breakit=False
             
             # If both Tms are already below the range, find the nearest Gs
             if mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0]:
-                print("if 1")
                 for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                     if sum(score_forw[i-5:i]) in [1,2]:
                         part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -462,7 +476,6 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                 
             # If one Tm is below the range, lower the other to make them most similar and find nearest Gs
             elif mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-                print("if 2.1")
                 for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                     if sum(score_forw[i-5:i]) in [1,2]:
                         part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -475,7 +488,6 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                 if not breakit:
                     part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
             elif mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-                print("if 2.2")
                 for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
                     if sum(score_rev[j-5:j]) in [1,2]:
                         part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -490,13 +502,11 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
             
             # If both Tms are within or above the range, lower them into the range and make them most similar and find nearest Gs
             else:
-                print("else")
                 breakit=False
                 # Do all of the above
                 for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                     for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
                         if abs(mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50))<=5 and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                            print("if 3")
                             part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                             part.primer_forward = part.primer_forward[:i]
                             part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -511,7 +521,6 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                     for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
                         for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
                             if mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                                print("if 4")
                                 part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                                 part.primer_forward = part.primer_forward[:i]
                                 part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -526,7 +535,6 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                     for i in range(len(part.primer_forward)-1-(max_annealing_len-18), len(part.primer_forward)):
                         for j in range(len(part.primer_reverse)-1-(max_annealing_len-18), len(part.primer_reverse)):
                             if sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                                print("if 5")
                                 part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                                 part.primer_forward = part.primer_forward[:i]
                                 part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
@@ -538,7 +546,6 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                             break
                     
                 if not breakit:
-                    print("nobreakit")
                     part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
                     part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
     return new_builds_list[0],ftrs,msg
@@ -726,6 +733,8 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
         Cpf1_parts = []
         
         for c,prt in enumerate(inserts):
+            if prt[1] != 'gRNA':
+                raise InvalidUsage("Cpf1 can only process gRNAs", status_code=400, payload={'pge': 'sequence.html'})
             Cpf1_parts.append(Part(prt[0], prt[1], str(prt[2]) + scaffld))
             
         return Cpf1_parts

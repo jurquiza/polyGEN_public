@@ -2,7 +2,8 @@ from flask import Flask, redirect, url_for, render_template, request, Response
 import os
 
 from engine_v2_2 import *
-
+    
+    
 session = {}  #here you can store variables that will be passed around routes 
 session['msg'] = None
 session_id = make_session_id()
@@ -54,7 +55,7 @@ def sequence():
             PTG_index+=1
             for e in element.split(';'):
                 element_list.append(e)
-            PTG_structure.append(element_list)
+            PTG_structure.append(element_list)  
 
         session['out'],ftrs,session['msg'],session['primers'] = runall(PTG_structure, **runall_args)
         if session['msg'] == 'comb_error':
@@ -119,6 +120,15 @@ def serve_table():
 @app.route("/success")
 def success():
     return "Success"
+
+
+@app.errorhandler(InvalidUsage)
+def handle_invalid_usage(error):
+    print(error.to_dict())
+    session['msg'] = error.to_dict()['message']
+    #response = jsonify(error.to_dict())
+    #response.status_code = error.status_code
+    return render_template(error.to_dict()['pge'], PTG_transfer=session.get('PTG_transfer', None), session=session)
 
 
 if __name__=='__main__':
