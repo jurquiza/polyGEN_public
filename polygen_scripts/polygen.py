@@ -93,28 +93,25 @@ def peg_generation():
         
 @app.route("/primer_list", methods=["POST","GET"])
 def serve_primers():
-    csv = 'oligo_ID,sequence\n'
+    csv = 'List of oligos:\n'
+    csv += 'oligo_ID,sequence\n'
     positions = len(session['oligo_index'])
     collapsed_index = int(session['oligo_index'])
+    oligo_ids = []
     for primer in session['primers']:
+        oligo_ids.append(session['PTG_oligo']+format(collapsed_index,'0'+str(positions)))
         csv += session['PTG_oligo']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
         collapsed_index += 1
+    
+    csv += '\nTable of fragments:\n'
+    csv += 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
+    for c,fragment in enumerate(session['out']):
+        csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
     return Response(
         csv,
         mimetype="text/csv",
         headers={"Content-disposition":
                  "attachment; filename=%s_oligos.csv"%session['PTG_name']})
-                 
-@app.route("/primer_table", methods=["POST", "GET"])
-def serve_table():
-    csv = 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
-    for c,fragment in enumerate(session['out']):
-        csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+fragment.primer_forward+','+str(np.round(fragment.primer_forward_tm,1))+','+fragment.primer_reverse+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
-    return Response(
-        csv,
-        mimetype="text/csv",
-        headers={"Content-disposition":
-                 "attachment; filename=%s_table.csv"%session['PTG_name']})
 
 
 @app.route("/success")

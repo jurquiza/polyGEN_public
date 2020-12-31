@@ -129,6 +129,9 @@ def flattn(list_2d):
             flattnd.append(subl)
     return flattnd
 
+def Diff(li1, li2):
+    return (list(list(set(li1)-set(li2)) + list(set(li2)-set(li1))))
+
 
 #Optimizes the overhangs used in Golden Gate assembly
 def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
@@ -278,6 +281,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
         # Iterate through overhang sets with increasing size until fitting one is found
         gg_opt = None
         breakit = False
+        existing_overhangs = additional_overhangs+bb_overlaps
         for p in range(10,51):
             free_overhangsets = []
             for q in range(5):
@@ -291,7 +295,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                         temp.append(s)
 
                 # Only grab sets that include all existing overhangs and delete the existing from the set
-                if all(i in [x.lower() for x in temp[q]] for i in additional_overhangs+bb_overlaps):
+                if all(i in [x.lower() for x in temp[q]] for i in existing_overhangs):
                     free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
                 else:
                     continue
@@ -305,34 +309,42 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
         
         # No sets include all existing overhangs
         if gg_opt is None:
-            msg = 'comb_warn'
-            print(1)
-            warnings.warn('The given combination of existing overhangs is not compatible with an optimal overhang set. '
-                          'Computing the best overhang set not including the given existing overhangs. There might be '
-                          'interference between overhangs.')
             
-            for p in range(10,51):
-                free_overhangsets = []
-                for q in range(5):
-                    with open('overhangsets/setsof%s.csv'%p,'r') as f:
-                        reader = csv.reader(f, delimiter=",")
-                        sets = list(reader)[1:]
+            overhangs_sublist = []
+            for l in range(len(existing_overhangs)-1,0,-1):
+                overhangs_subsublist = list(itertools.combinations(existing_overhangs,l))
+                overhangs_sublist += overhangs_subsublist
+            print(overhangs_sublist)
+            
+            for sublist in overhangs_sublist:
+                for p in range(10,51):
+                    free_overhangsets = []
+                    for q in range(5):
+                        with open('overhangsets/setsof%s.csv'%p,'r') as f:
+                            reader = csv.reader(f, delimiter=",")
+                            sets = list(reader)[1:]
 
-                    temp = []
-                    for s in sets:
-                        if len(s) != 0:
-                            temp.append(s)
+                        temp = []
+                        for s in sets:
+                            if len(s) != 0:
+                                temp.append(s)
 
-                    # Only grab sets that include all existing overhangs and delete the existing from the set
-                    if all(i in [x.lower() for x in temp[q]] for i in additional_overhangs+bb_overlaps):
-                        free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
-                    else:
-                        continue
+                        # Only grab sets that include all existing overhangs and delete the existing from the set
+                        if all(i in [x.lower() for x in temp[q]] for i in sublist):
+                            free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
+                        else:
+                            continue
 
-                if free_overhangsets:
-                    gg_opt = golden_gate_optimization(unpacked_list, free_overhangsets, poltype_gg)
-                if gg_opt is not None:
-                    breakit = True
+                    if free_overhangsets:
+                        gg_opt = golden_gate_optimization(unpacked_list, free_overhangsets, poltype_gg)
+                    if gg_opt is not None:
+                        breakit = True
+                        
+                        exist = ','.join(sublist)
+                        nexist = ','.join(Diff(sublist, existing_overhangs))
+                        msg = 'The given combination of existing overhangs is not compatible with an optimal overhang set. Found the set including the largest possible fraction of existing overhangs ('+exist+'). The following overhangs were disregarded: '+nexist+'. There might be interference between overhangs.'
+                    if breakit:
+                        break
                 if breakit:
                     break
         
