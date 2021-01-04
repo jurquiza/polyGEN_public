@@ -314,7 +314,6 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
             for l in range(len(existing_overhangs)-1,0,-1):
                 overhangs_subsublist = list(itertools.combinations(existing_overhangs,l))
                 overhangs_sublist += overhangs_subsublist
-            print(overhangs_sublist)
             
             for sublist in overhangs_sublist:
                 for p in range(10,51):
@@ -754,6 +753,8 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
 
 # Execute computation
 def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_run='ptg'):
+    if len(arr[0]) < 3:
+        raise InvalidUsage("No PTG input", status_code=400, payload={'pge': 'sequence.html'})
     msg = None
     full_sequence = ''
     PTG = PTGbldr(arr, poltype_run)
