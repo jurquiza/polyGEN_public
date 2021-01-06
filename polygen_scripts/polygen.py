@@ -3,8 +3,7 @@ import os
 
 from engine_v2_2 import *
     
-session = {}		# dictionary to pass variables around routes
-#session_id = make_session_id()
+session = {'clr': {'link': '#FF0000'}}		# dictionary to pass variables around routes
 
 
 app = Flask(__name__)
@@ -21,6 +20,7 @@ def learn():
 
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
+    session['msg'] = None
     session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF'}
     
     if request.method == "POST":
@@ -65,10 +65,11 @@ def sequence():
 
     else:
         
-        return render_template("sequence.html",PTG_transfer=session.get('PTG_transfer', None))
+        return render_template("sequence.html",PTG_transfer=session.get('PTG_transfer', None), session=session)
 
 @app.route("/peg", methods=["POST","GET"])
 def peg_generation():
+    session['msg'] = None
     session['clr'] = {'sequence': '#FFFFFF', 'edits': '#FFFFFF'}
 
     if request.method == "POST":
@@ -90,7 +91,7 @@ def peg_generation():
 
         return redirect(url_for('sequence'))
     else:
-        return render_template("peg_generation.html")
+        return render_template("peg_generation.html", session=session)
         
 @app.route("/primer_list", methods=["POST","GET"])
 def serve_primers():

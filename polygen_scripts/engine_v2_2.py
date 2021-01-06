@@ -764,7 +764,7 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
 # Execute computation
 def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_run='ptg'):
     if len(arr[0]) < 3:
-        raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_desc'})
+        raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
     msg = None
     full_sequence = ''
     PTG = PTGbldr(arr, poltype_run)
