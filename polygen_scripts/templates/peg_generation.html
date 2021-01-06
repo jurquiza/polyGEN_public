@@ -14,14 +14,19 @@
   </div>
   <div class="form-group">
     <label for="exampleFormControlTextarea1">Sequence to be edited</label>
-    <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
+    {% if PEG_transfer %}
+      <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
+    placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}">{{ PEG_transfer }}</textarea>
+    {% else %}
+      <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
     placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}"></textarea>
+    {% endif %}
   </div>
   <div class="form-group">
     <div class="row">
       <div class="col-11">
         <label for="exampleFormControlInput1">PEG edits</label>
-        <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut" style="background-color:{{ session['clr']['edits'] }}">
+        <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut" value="{{ session['PEG_edits'] }}" style="background-color:{{ session['clr']['edits'] }}">
       </div>
       <div class="col-1">
         <div class="row">

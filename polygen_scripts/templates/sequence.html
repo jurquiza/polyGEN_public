@@ -28,19 +28,19 @@
     <div class="col-6">
       <div class="form-group">
         <label for="ControlInput1">Polycistron Name</label>
-        <input type="text" name="PTG_name" class="form-control" id="ControlInput1" placeholder="e.g. pegUU">
+        <input type="text" name="PTG_name" class="form-control" id="ControlInput1" placeholder="e.g. pegUU" value="{{ session['PTG_name'] }}">
       </div>
     </div>
     <div class="col-3">
       <div class="form-group">
         <label for="ControlInput2">Oligos prefix</label>
-        <input type="text" name="oligo_prefix" class="form-control" id="ControlInput2" placeholder="e.g. oUU">
+        <input type="text" name="oligo_prefix" class="form-control" id="ControlInput2" placeholder="e.g. oUU" value="{{ session['oligo_prefix'] }}">
       </div>
     </div>
     <div class="col-3">
       <div class="form-group">
         <label for="Input_oli_index">Starting index</label>
-        <input type="text" name="oligo_index" class="form-control" id="Input_oli_index" placeholder="e.g. 0291">
+        <input type="text" name="oligo_index" class="form-control" id="Input_oli_index" placeholder="e.g. 0291" value="{{ session['oligo_index'] }}">
       </div>
     </div>
   </div>
@@ -62,13 +62,13 @@
     <div class="col-3">
       <div class="form-group">
         <label for="ControlInputbb">Border overhangs</label>
-        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
     <div class="col-3">
       <div class="form-group">
         <label for="ControlInputAdd">Additional overhangs</label>
-        <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['add_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div> 
   </div>   
@@ -85,8 +85,17 @@
       </div>
     </div>
   </div>
-  <div class="form-group">
-    <button type="submit" class="btn btn-primary">Submit</button>
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <button type="submit" name="submit_button" class="btn btn-primary" value="submit">Submit</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <button type="submit" name="submit_button" class="btn btn-primary" value="reset">Reset</button>
+      </div>
+    </div>
   </div>
 </form>
 </div>
