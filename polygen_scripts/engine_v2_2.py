@@ -348,7 +348,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                     break
         
         if gg_opt is None:
-            raise InvalidUsage("No combination of optimal linkers possible for the provided existing linkers", status_code=400, payload={'pge': 'sequence.html'})
+            raise InvalidUsage("No combination of optimal linkers possible for the provided existing linkers", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
 
 
         #Modify sequences and design primers
@@ -570,6 +570,16 @@ def pegbldr(sequence, edits, mode='PE2'):
     sequence is the original 5' -> 3' sequence strand that is to be edited
     edits is an array containing all desired edits in the form [[index of edit, new bases, type of edit],[...]]
     '''
+
+    if sequence == '':
+        raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
+        
+    if re.search(r'^[ACGTacgt]*$', sequence) is None:
+        raise InvalidUsage("Invalid sequence input ", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
+    
+    if edits == [['']]:
+        raise InvalidUsage("No edits input", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
+    
     
     sequence = sequence.upper()
     plc_seq = sequence[:]
@@ -599,7 +609,7 @@ def pegbldr(sequence, edits, mode='PE2'):
         
         # Check if usable PAMs are present
         if pegPAMs_forw == pegPAMs_rev == []:
-            raise ValueError("There are no usable PAM motifs around the edit")
+            raise InvalidUsage("There are no usable PAM motifs around the edit", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
         
         # Check if there are PAMs in only one strand
         elif pegPAMs_forw == []:
@@ -636,7 +646,7 @@ def pegbldr(sequence, edits, mode='PE2'):
                 warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
 
         if pegPAM-20 < 0:
-            raise ValueError("The provided sequence does not cover enough area around the edit")
+            raise InvalidUsage("The provided sequence does not cover enough area around the edit", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
         else:
             pegspacer = seq[pegPAM-20:pegPAM]                    # Spacer should be 20 nt in length and end at PAM
         PBS = reverse_complement(seq[pegPAM-16:pegPAM-3]) # PBS must be in opposite direction
@@ -754,7 +764,7 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
 # Execute computation
 def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_run='ptg'):
     if len(arr[0]) < 3:
-        raise InvalidUsage("No PTG input", status_code=400, payload={'pge': 'sequence.html'})
+        raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_desc'})
     msg = None
     full_sequence = ''
     PTG = PTGbldr(arr, poltype_run)

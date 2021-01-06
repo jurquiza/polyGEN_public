@@ -1,14 +1,14 @@
-from flask import Flask, redirect, url_for, render_template, request, Response
+from flask import Flask, redirect, url_for, render_template, request, Response#, session
 import os
 
 from engine_v2_2 import *
     
-    
-session = {}  #here you can store variables that will be passed around routes 
-session['msg'] = None
-session_id = make_session_id()
+session = {}		# dictionary to pass variables around routes
+#session_id = make_session_id()
+
 
 app = Flask(__name__)
+app.secret_key = 'ee839687a282e6493054c86e00e86925dc04de931acf4aed'
 
 @app.route("/")
 def home():
@@ -21,6 +21,8 @@ def learn():
 
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
+    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF'}
+    
     if request.method == "POST":
         runall_args = {}
         runall_args['poltype_run'] = request.form["poltype_input"]
@@ -40,8 +42,6 @@ def sequence():
         else:
             session['PTG_name'] = 'PTG'
         runall_args['tm_range'] = [int(request.form['min_temp'][:2]), int(request.form['max_temp'][:2])]
-        if request.form['max_len']:
-            runall_args['max_ann_len'] = int(request.form['max_len'])
         if request.form['bb_ovrhng']:
             runall_args['bb_overlaps'] = request.form['bb_ovrhng'].split(';')
         if request.form['add_ovrhng']:
@@ -64,15 +64,16 @@ def sequence():
         return render_template("primer_list.html", session=session)
 
     else:
-
+        
         return render_template("sequence.html",PTG_transfer=session.get('PTG_transfer', None))
 
 @app.route("/peg", methods=["POST","GET"])
 def peg_generation():
+    session['clr'] = {'sequence': '#FFFFFF', 'edits': '#FFFFFF'}
+
     if request.method == "POST":
         PEG_sequence = request.form["sequence"]
-        PEG_edits = request.form["edits"]
-        PEG_edits = PEG_edits.split('|')
+        PEG_edits = request.form["edits"].split('|')
         PEG_mode = request.form["mode"]
 
         pegs_list = []
@@ -121,10 +122,8 @@ def success():
 
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
-    print(error.to_dict())
     session['msg'] = error.to_dict()['message']
-    #response = jsonify(error.to_dict())
-    #response.status_code = error.status_code
+    session['clr'][error.to_dict()['box']] = '#FF0000'
     return render_template(error.to_dict()['pge'], PTG_transfer=session.get('PTG_transfer', None), session=session)
 
 
