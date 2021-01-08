@@ -8,16 +8,18 @@
 <form action='#' method='post'>
   <div class="row">
     <div class="col">
+    <div class="text-center">
       {% if session['msg'] %}
-        <p style="color:red;">{{ session['msg'] }}</p>
+        <p style="color:red; font-weight:bold">{{ session['msg'] }}</p>
       {% endif %}
+    </div>
     </div>
   </div>
   <div class="row">
     <div class="col">
-      <div class="form-group">
-        <label for="polyType">Type of polycistronic architecture</label>
-        <select name="poltype_input" id="poltype_input">
+      <div class="form-group form-inline">
+        <label for="poltype_input">Type of polycistronic architecture:</label>
+        <select name="poltype_input" id="poltype_input" class="form-control" style="margin-left:10px; background-color:{{ session['clr']['poltype_input'] }}">
           <option value="ptg">PTG</option>
           <option value="cpf1">Cpf1</option>
         </select>
@@ -93,7 +95,9 @@
     </div>
     <div class="col">
       <div class="form-group">
-        <button type="submit" name="submit_button" class="btn btn-primary" value="reset">Reset</button>
+      <div class="text-right">
+        <button type="submit" name="submit_button" class="btn btn-outline-secondary" value="reset">Reset</button>
+      </div>
       </div>
     </div>
   </div>

@@ -14,32 +14,8 @@ footer {
     background-color: DarkGrey;
     color: white;
 }
-.ui.blue.buttons .button,
-.ui.blue.button {
-  background-color: #6ECFF5!important;
-  color: #FFFFFF;
-  text-shadow: none;
-  background-image: none;
-  border-radius: 0.4em;
-  padding-left: .5em;
-  padding-right: .5em;
-  padding-top: .2em;
-  padding-bottom: .2em;
-}
-.ui.blue.buttons .button:hover,
-.ui.blue.button:hover {
-  background-color: #1AB8F3!important;
-}
-
-slider{}
-.red .noUi-connect {
-  background: #c0392b;
-}
-.orange .noUi-connect {
-  background: #2980b9;
-}
-.green .noUi-connect {
-  background: #27ae60;
+label {
+    font-weight: bold;
 }
 </style>
 <head>
@@ -47,11 +23,13 @@ slider{}
 
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
   <link href="{{url_for('static', filename='nouislider_materialize.css')}}" rel="stylesheet">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='PolyGEN_logo.ico') }}">
 
   <div class="header" id="navbar">
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="{{ url_for('home') }}">PolyGEN</a>
+  <a class="navbar-brand"href="{{ url_for('home') }}"> 
+    <img src="{{ url_for('static', filename='PolyGEN_logo.png') }}" class="fluid" height="45" hspace="5" alt="PolyGEN logo"/>
+  </a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>

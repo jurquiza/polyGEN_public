@@ -21,7 +21,7 @@ def learn():
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
     session['msg'] = None
-    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF'}
+    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF'}
     
     if request.method == "POST":
         if request.form['submit_button'] == 'submit':

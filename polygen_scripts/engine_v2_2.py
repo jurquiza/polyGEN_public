@@ -755,7 +755,7 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
         
         for c,prt in enumerate(inserts):
             if prt[1] != 'gRNA':
-                raise InvalidUsage("Cpf1 can only process gRNAs", status_code=400, payload={'pge': 'sequence.html'})
+                raise InvalidUsage("Cpf1 can only process gRNAs", status_code=400, payload={'pge': 'sequence.html', 'box': 'poltype_input'})
             Cpf1_parts.append(Part(prt[0], prt[1], str(prt[2]) + scaffld))
             
         return Cpf1_parts
