@@ -30,15 +30,23 @@ footer {
 .ui.blue.button:hover {
   background-color: #1AB8F3!important;
 }
-.noUi-connect {
-	background: purple;
+
+slider{}
+.red .noUi-connect {
+  background: #c0392b;
+}
+.orange .noUi-connect {
+  background: #2980b9;
+}
+.green .noUi-connect {
+  background: #27ae60;
 }
 </style>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-  <link href="//cdn.bootcss.com/noUiSlider/8.5.1/nouislider.min.css" rel="stylesheet">
+  <link href="{{url_for('static', filename='nouislider_materialize.css')}}" rel="stylesheet">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 
   <div class="header" id="navbar">
@@ -94,7 +102,7 @@ footer {
     <footer class="container mt-auto py-3">
       <div class="row">
         <div class="col">
-          <p>PolyGEN was developed within the Cluster of Excellence for on Plant Sciences which is "Gefördert durch die Deutsche Forschungsgemeinschaft (DFG) im Rahmen der
+          <p>PolyGEN was developed within the Cluster of Excellence on Plant Sciences which is "Gefördert durch die Deutsche Forschungsgemeinschaft (DFG) im Rahmen der
         Exzellenzstrategie des Bundes und der Länder - EXC-2049/1 - Projektnummer 390686111"</p>
         </div>
       </div>
@@ -117,39 +125,64 @@ var inputs = [input0, input1];
 noUiSlider.create(slider, {
     start: [52, 72],
     step: 1,
-    margin: 1,
-    connect: true,
-    tooltips: [false, false],
-    orientation: 'horizontal',
-    behaviour: 'tap-drag',
+    connect: [true,false,true],
     range: {
-        'min': [40],
-        'max': [80]
+        'min': 40,
+        'max': 80
     },
     pips: {
         mode: 'count',
         values: 5,
-        density: 2
+        density: 2.5
     },
     format: {
-        // 'to' the formatted value. Receives a number.
         to: function (value) {
             return value + ' °C';
         },
-        // 'from' the formatted value.
-        // Receives a string, should return a number.
         from: function (value) {
-            return Number(value.replace(',-', ''));
+            return Number(value.replace(' ,-', ''));
         }
     }
 });
 
 slider.noUiSlider.on('update', function (values, handle) {
-  var value = values[handle];
 
-  inputs[handle].value = values[handle]
-
+    var value = values[handle];
+    inputs[handle].value = values[handle]; 
+    
+    updateColorClass(document.getElementById('slider'), values[handle].substr(0,2), handle);
 });
+
+function updateColorClass(element, value, handle) {
+
+  var firstcolor = [0,0,255];
+  var secondcolor = [255,0,0];  
+  var ratio = (value-40)/40;
+        
+  var result = pickHex( secondcolor,firstcolor, ratio );
+  var clr = 'rgb('+result.join()+')'
+  
+  var tm_inpt = ['ControlInputMinT', 'ControlInputMaxT'];
+
+  element.getElementsByClassName('noUi-tooltip')[handle].style.backgroundColor = clr;
+  element.getElementsByClassName('noUi-handle')[handle].style.backgroundColor = clr;
+  document.getElementById(tm_inpt[handle]).style.backgroundColor = clr;
+}
+
+/*https://stackoverflow.com/questions/30143082/how-to-get-color-value-from-gradient-by-percentage-with-javascript*/
+function pickHex(color1, color2, weight) {
+
+    var p = weight;
+    var w = p * 2 - 1;
+    var w1 = (w/1+1) / 2;
+    var w2 = 1 - w1;
+    var rgb = [Math.round(color1[0] * w1 + color2[0] * w2),
+        Math.round(color1[1] * w1 + color2[1] * w2),
+        Math.round(color1[2] * w1 + color2[2] * w2)];
+        
+    return rgb;
+}
+
 
 input0.addEventListener('change', function () {
     slider.noUiSlider.set([this.value, null]);
