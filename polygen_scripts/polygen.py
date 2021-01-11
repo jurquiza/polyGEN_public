@@ -13,6 +13,7 @@ app.secret_key = 'ee839687a282e6493054c86e00e86925dc04de931acf4aed'
 def home():
     return render_template("index.html", content="Testing")
 
+
 @app.route("/learn")
 def learn():
     return render_template("learn_more.html", content="Testing")
@@ -72,6 +73,7 @@ def sequence():
         
         return render_template("sequence.html",PTG_transfer=session.get('PTG_transfer', None), session=session)
 
+
 @app.route("/peg", methods=["POST","GET"])
 def peg_generation():
     session['msg'] = None
@@ -98,6 +100,7 @@ def peg_generation():
         return redirect(url_for('sequence'))
     else:
         return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)
+      
         
 @app.route("/primer_list", methods=["POST","GET"])
 def serve_primers():
@@ -120,6 +123,11 @@ def serve_primers():
         mimetype="text/csv",
         headers={"Content-disposition":
                  "attachment; filename=%s_oligos.csv"%session['PTG_name']})
+                 
+
+@app.route("/impressum")
+def impress():
+    return render_template("impressum.html", content="Testing")
 
 
 @app.route("/success")
