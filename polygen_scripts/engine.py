@@ -131,10 +131,25 @@ def flattn(list_2d):
 
 def Diff(li1, li2):
     return (list(list(set(li1)-set(li2)) + list(set(li2)-set(li1))))
+    
+    
+# Set template sequences tRNA and gRNA scaffold
+tRNA = 'AACAAAGCACCAGTGGTCTAGTGGTAGAATAGTACCCTGCCACGGTACAGACCCGGGTTCGATTCCCGGCTGGTGCA'
+scaffld = 'GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC'
 
 
-#Optimizes the overhangs used in Golden Gate assembly
+#Optimize the overhangs used in Golden Gate assembly
 def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
+    '''
+    function for finding linkers from optimal linker sets in a provided parts list
+    
+    necessary inputs
+    parts_list: array of objects of class part
+    free_overhangsets: array of arrays containing 4 bp linkers
+    
+    optional arguments
+    poltype_opt: string, defaults to 'ptg'. Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1'
+    '''
 
     # Write all variable sequences in same order in a new list
     oh_list = []
@@ -232,13 +247,22 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     return None
 
 
-# Set template sequences tRNA and gRNA scaffold
-tRNA = 'AACAAAGCACCAGTGGTCTAGTGGTAGAATAGTACCCTGCCACGGTACAGACCCGGGTTCGATTCCCGGCTGGTGCA'
-scaffld = 'GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC'
-
-
 # Perform scarless Golden Gate assembly computation with provided parts
-def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, additional_overhangs, poltype_gg='ptg'):
+def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_gg='ptg'):
+    '''
+    function performing the main computation of PolyGEN
+    
+    necessary input
+    parts_list: array of objects of class part
+    
+    optional arguments
+    primer_tm_range: array of length 2, defaults to [52,73]. Temperature range to aim for during primer optimization. 
+    max_annealing_len: int, defaults to 30. Maximal annealing length of the static part of the primer.
+    bb_overlaps: array, defaults to ['tgcc','gttt']. Linkers of the destination plasmid flanking the final PTG. 
+    additional_overhangs: array, defaults to []. Additional linkers in the destination plasmid.
+    poltype_gg: string, defaults to 'ptg'. Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1'
+    '''
+    
     msg = None
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
@@ -277,7 +301,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                     ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+20, strand=1), type='spacer'))
                     mmry += len(part.sequence)
             
-        
+
         # Iterate through overhang sets with increasing size until fitting one is found
         gg_opt = None
         breakit = False
@@ -328,7 +352,7 @@ def scarless_gg(parts_list, primer_tm_range, max_annealing_len, bb_overlaps, add
                             if len(s) != 0:
                                 temp.append(s)
 
-                        # Only grab sets that include all existing overhangs and delete the existing from the set
+                        # Only grab sets that include all linkers in the current sublist and delete the existing from the set
                         if all(i in [x.lower() for x in temp[q]] for i in sublist):
                             free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
                         else:
@@ -763,6 +787,20 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
 
 # Execute computation
 def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_run='ptg'):
+    '''
+    main gateway function of PolyGEN.
+    
+    necessary input
+    arr: array of the form [['name', 'type', 'sequence'],[...]]
+    
+    optional arguments
+    tm_range: array of length 2, defaults to [52,73]. Temperature range to aim for during primer optimization. 
+    max_ann_len: int, defaults to 30. Maximal annealing length of the static part of the primer.
+    bb_overlaps: array, defaults to ['tgcc','gttt']. Linkers of the destination plasmid flanking the final PTG. 
+    additional_overhangs: array, defaults to []. Additional linkers in the destination plasmid.
+    poltype_run: string, defaults to 'ptg'. Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1'
+    '''
+    
     if len(arr[0]) < 3:
         raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
     msg = None
