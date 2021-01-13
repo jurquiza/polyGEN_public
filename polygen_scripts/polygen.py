@@ -22,7 +22,7 @@ def learn():
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
     session['msg'] = None
-    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF'}
+    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF'}
     
     if request.method == "POST":
         if request.form['submit_button'] == 'submit':
@@ -41,12 +41,15 @@ def sequence():
             if session['add_ovrhng']:
                 runall_args['additional_overhangs'] = session["add_ovrhng"].split(';')
             
+            if session['oligo_index'] != '' and re.search(r'^[0-9]*$', session['oligo_index']) is None:
+                raise InvalidUsage("Starting index must be a number", status_code=400, payload={'pge': 'sequence.html', 'box': 'oligo_index'})
+            
             PTG_input = session['PTG_transfer'].split('|')
             PTG_structure = []
             PTG_index=1
             for element in PTG_input:
                 element_list=[]
-                element_list.append([session['oligo_prefix'] if session['oligo_prefix'] else 'o'][0]+'_'+str(PTG_index))
+                element_list.append([session['PTG_name'] if session['PTG_name'] else 'PTG'][0]+'_'+str(PTG_index))
                 PTG_index+=1
                 for e in element.split(';'):
                     element_list.append(e)
@@ -138,7 +141,7 @@ def success():
 @app.errorhandler(InvalidUsage)
 def handle_invalid_usage(error):
     session['msg'] = error.to_dict()['message']
-    session['clr'][error.to_dict()['box']] = '#FF0000'
+    session['clr'][error.to_dict()['box']] = '#FA5858'
     return render_template(error.to_dict()['pge'], PEG_transfer=session.get('PEG_sequence'), PTG_transfer=session.get('PTG_transfer', None), session=session)
 
 

@@ -597,13 +597,24 @@ def pegbldr(sequence, edits, mode='PE2'):
 
     if sequence == '':
         raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
-        
-    if re.search(r'^[ACGTacgt]*$', sequence) is None:
+    elif re.search(r'^[ACGTacgt]*$', sequence) is None:
         raise InvalidUsage("Invalid sequence input ", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
     
     if edits == [['']]:
         raise InvalidUsage("No edits input", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
-    
+    for e in edits:
+        if len(e) != 3:
+            raise InvalidUsage("Invalid edits input syntax", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
+        elif len(e[0].split(',')) != len(e[1].split(',')):
+            raise InvalidUsage("Inconsistent number of edits", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
+        elif e[2] not in ['mut', 'del', 'ins']:
+            raise InvalidUsage("Invalid edit type", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
+        elif e[2] == 'mut' and (any([re.search(r'^[0-9]*$', n) is None for n in e[0].split(',')]) or any([re.search(r'^[ACGTacgt]*$', b) is None for b in e[1].split(',')])):
+            raise InvalidUsage("Invalid specifications for edit type \'mut\'", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
+        elif e[2] == 'del' and any([re.search(r'^[0-9]*$', n) is None for n in e[0].split(',')+e[1].split(',')]):
+            raise InvalidUsage("Invalid specifications for edit type \'del\'", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
+        elif e[2] == 'ins' and (any([re.search(r'^[0-9]*$', n) is None for n in e[0].split(',')]) or any([re.search(r'^[ACGTacgt]*$', b) is None for b in e[1].split(',')])):
+            raise InvalidUsage("Invalid specifications for edit type \'ins\'", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
     
     sequence = sequence.upper()
     plc_seq = sequence[:]
@@ -800,9 +811,18 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
     additional_overhangs: array, defaults to []. Additional linkers in the destination plasmid.
     poltype_run: string, defaults to 'ptg'. Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1'
     '''
+    for e in arr:
+        if len(e) != 3:
+            raise InvalidUsage("Invalid input syntax", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+        elif e[1] not in ['gRNA', 'pegRNA', 'smRNA']:
+            raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+        elif re.search(r'^[ACGTacgt]*$', e[2]) is None:
+            raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
     
-    if len(arr[0]) < 3:
-        raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+    for lnk in bb_overlaps+additional_overhangs:
+        if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
+            raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
+    
     msg = None
     full_sequence = ''
     PTG = PTGbldr(arr, poltype_run)
