@@ -8,24 +8,14 @@
 <form action='#' method='post'>
   <div class="row">
     <div class="col">
-    <div class="text-center">
-      {% if session['msg'] %}
-        <p style="color: #FA5858; font-weight:bold">{{ session['msg'] }}</p>
-      {% endif %}
-    </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col">
-      <div class="form-group form-inline">
-        <label for="poltype_input">Type of polycistronic architecture:</label>
-        <select name="poltype_input" id="poltype_input" class="form-control" style="margin-left:10px; background-color:{{ session['clr']['poltype_input'] }}">
-          <option value="ptg">PTG</option>
-          <option value="cpf1">Cpf1</option>
-        </select>
+      <div class="text-center">
+        {% if session['msg'] %}
+          <p style="color: #FA5858; font-weight:bold">{{ session['msg'] }}</p>
+        {% endif %}
       </div>
     </div>
   </div>
+  <div style="background-color: #EFF5FB; border-radius: 5px; padding: 10px">
   <div class="row">
     <div class="col-6">
       <div class="form-group">
@@ -61,24 +51,33 @@
         <input type="text" name="max_temp" class="form-control" id="ControlInputMaxT" style="color: #FFFFFF">
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-2">
       <div class="form-group">
-        <label for="ControlInputbb">Border overhangs</label>
+        <label for="ControlInputbb">Border linkers</label>
         <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-2">
       <div class="form-group">
-        <label for="ControlInputAdd">Additional overhangs</label>
+        <label for="ControlInputAdd">Additional linkers</label>
         <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['add_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div> 
+    <div class="col-2">
+      <div class="form-group">
+        <label for="poltype_input">Type of polycistron</label>
+        <select name="poltype_input" id="poltype_input" class="form-control" style="background-color:{{ session['clr']['poltype_input'] }}">
+          <option value="ptg">PTG</option>
+          <option value="cpf1">Cpf1</option>
+        </select>
+      </div>
+    </div>
   </div>   
 
   <div class="row">
     <div class="col-12">
       <div class="form-group">
-        <label for="ControlTextarea1">Polycistron description</label>
+        <label for="ControlTextarea1">Polycistron description (required)</label>
         {% if PTG_transfer %}
             <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC' style="background-color:{{ session['clr']['sequence_spacers'] }}">{{PTG_transfer}}</textarea>
         {% else %}
@@ -95,11 +94,12 @@
     </div>
     <div class="col">
       <div class="form-group">
-      <div class="text-right">
-        <button type="submit" name="submit_button" class="btn btn-outline-secondary" value="reset">Reset</button>
-      </div>
+        <div class="text-right">
+          <button type="submit" name="submit_button" class="btn btn-outline-secondary" value="reset" style="background-color: #FFFFFF">Reset</button>
+        </div>
       </div>
     </div>
+  </div>
   </div>
 </form>
 </div>

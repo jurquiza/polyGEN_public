@@ -17,43 +17,53 @@ code_style {
   padding: 5px 10px 5px 10px;
   overflow-wrap: break-word
 }
+p {
+text-align: justify
+}
 </style>
 
 <div class="container">
   <div class="row">
     <hr style="width:100%;height:1px;border-width:0;color:gray;background-color:gray">
-    PolyGEN combines tools for automatic PTG design and automatic prime editing guide RNA design to enable an easy use of polycistronic elements both in the context of prime editing experiments but also for any other setup profiting from polycistron-produced RNAs.
+    PolyGEN combines tools for automatic PTG design and automatic prime editing guide RNA design to enable an easy use of polycistronic elements both in the context of prime editing experiments but also for any other setup profiting from polycistronically-produced RNAs.
     <hr style="width:100%;height:1px;border-width:0;color:gray;background-color:gray">
   </div>
   
   <div class="row justify-content-md-center">
     <div class="col-md-10">
     
+      <h2 id="contents" style="color:#2A65AF">Contents</h2>
+        <ul style="list-style-type: upper-roman">
+        <li> <a href="#background">Background</a> </li>
+        <li> <a href="#PTG_design">PTG design</a> </li>
+        <li> <a href="#pegRNA_design">pegRNA design</a> </li>
+        </ul>
+    
       <h1 id="background" style="color:#2A65AF">Background</h1>
     
-      <p style="text-align: justify">
+      <p>
       With modern molecular and synthetic biology driving towards the control of increasingly complex molecular systems, suitable tools are becoming more necessary to support this progress. Especially the ever-growing number of applications for gene editing through CRISPR/Cas-derived methods are demanding parallel improvements in technology to support these methods. Scientists are now able to target and knock out specific genes with high accuracy, silence or enhance gene activity and edit DNA on the level of individual bases. 
       </p>
-      <p style="text-align: justify">
+      <p>
       One technological limitation is delivering large batteries of RNAs to facilitate multiplex applications of CRISPR methods, or RNAs to facilitate any RNA-dependent methods such as RNAi, for that matter. A promising supporting technology is the polycistronic-tRNA-gRNA (PTG) architecture<sup><a href="#xie2015">[1]</a></sup>. It hijacks the endogenous tRNA processing systems of cells to produce any custom RNA sequence, located between two flanking tRNAs. One PTG may harbour several custom RNAs, separated by tRNAs. The endogenous tRNA processing system will recognise the tRNAs and excise them from the transcribed construct, thereby also releasing the custom sequences. 
       </p>
-      <p style="text-align: justify">
+      <p>
       PTGs can be constructed from smaller subfragments by Golden Gate assembly. These subfragments can be based on a gRNA-tRNA template, using custom primers with overhanging sequences to introduce the restriction enzyme recognition and cut sites as well as the variable sequences such as spacers for gRNAs. For a successful Golden Gate reaction, the used linkers (restriction enzyme cut sites) must be selected with care in order to ensure correct assembly without mismatching<sup><a href="#hamedirad2019">[2]</a></sup>. Additionally, a scarless assembly is advisable for correct functionality of the resulting RNAs. Both factors necessitate an intricate, lengthy and error-prone design process, when carried out manually. 
       </p>
-      <p style="text-align: justify">
+      <p>
       PolyGEN aids scientists in producing their custom PTGs for multiplex RNA delivery by automating the design on the necessary subfragments. User input specifying the contents of a PTG will be used in a computation to find optimal linkers for efficient and scarless Golden Gate assembly. The primers calculated by PolyGEN can be used to produce all necessary subfragments by PCR with a gRNA-tRNA-template, which can be directly deployed in a subsequent Golden Gate reaction.
       </p>
-      <p style="text-align: justify">
+      <p>
       Supplementing the design of polycistronic genes, PolyGEN also offers a tool for finding preliminary pegRNA designs for use with a Prime Editor (PE)<sup><a href="#anzalone2019">[3]</a></sup>. These designs are based on a provided sequence and desired mutation therein. The design process is based on the suggestions from the original Prime Editor paper. It should be regarded only as a preliminary suggestion and subject to further optimization.
       
     
       <h1 id="PTG_design" style="color:#2A65AF">PTG Design Manual</h1>
 
-      <p style="text-align: justify">
+      <p>
       The PTG function offers design automation of polycistronic tRNA-based genes containing custom RNAs for assembly in BsaI-driven Golden Gate experiments. The underlying architecture of the PTG design is based on <a href="https://ibiocad.igb.illinois.edu/">iBioCAD</a> by Scott Weisberg in HamediRad et al. (2019), for which the code is openly available through <a href="https://github.com/scottweis1/iBioCAD">Github</a>.
       </p>
 
-      <p style="text-align: justify">
+      <p>
       To use the PTG design function of PolyGEN, the user must provide a list of the desired custom RNAs to be included in the finished polycistron of the form:
       </p>
 
@@ -63,7 +73,7 @@ code_style {
         </code_style>
       </div>
 
-      <p style="text-align: justify">
+      <p>
       where 'type' is the type of RNAs, which the part belongs to ('gRNA', 'pegRNA' or 'smRNA') and 'sequence' is the entire sequence of the part in 5' <span>&#8594;</span>  3' direction. Note that 'type' can at this point only be one of the three listed options. Other inputs will lead to errors. For gRNAs, provide only the 20 bp spacer, for pegRNAs and smRNAs, provide the entire sequence. An arbitrary exemplary input would be:
       </p>
 
@@ -73,7 +83,7 @@ code_style {
         </code_style>
       </div>
 
-      <p style="text-align: justify">
+      <p>
       From this, PolyGEN will construct the finished polycistron of the form tRNA-smRNA-tRNA-gRNA-tRNA and calculate all oligomers necessary to produce each singular part via PCR with a plasmid containing a gRNA-tRNA template. The produced parts can then be assembled by Golden Gate into a plasmid vector containing suitable BsaI-sites to take up the PTG. By default, PolyGEN will use the following parameters, which are adjustable with the exception of the static primer annealing length:
       </p>
 
@@ -86,17 +96,17 @@ code_style {
       </ul>
       </p>
 
-      <p style="text-align: justify">
+      <p>
       To calculate the primer melting temperatures, PolyGEN uses the same method and parameters as Benchling<sup><a href="#santalucia1998">[4]</a></sup>.
       </p>
       
-      <p style="text-align: justify">
+      <p>
       The mode of polycistronic architecture can be switched from PTG to Cpf1, if the user wants to perform a Cpf1 experiment instead. In that case, the architecture will simply comprise a concatenation of specified gRNAs. The only difference to the use of the PTG mode is that only gRNAs may be specified in the sequence description. Other types will naturally lead to errors.
 
 
       <h1 id="pegRNA_design" style="color:#2A65AF">pegRNA Design Manual</h1>
 
-      <p style="text-align: justify">
+      <p>
       PolyGEN also features a method for automated design of pegRNAs for desired edits, including specific point mutations, deletions and insertions. Here, the user must supply the sequence which is supposed to be edited with a large enough sequence range around the edit position (at least 50 nucleotides upstream and downstream of any edit are advised) and information about the edit itself. The following is an input template:
       </p>
 
@@ -114,7 +124,7 @@ code_style {
       </ul>
       </p>
 
-      <p style="text-align: justify">
+      <p>
       Note, that currently the positions are specified as the indices of a 0-based array, meaning that the first position of a sequence is 0. Note also that similarly to the type input for the PTGs, here the type of mutation can again only be one of 'mut', 'del' or 'ins'. Other inputs will lead to errors. Each type of edit can span multiple bases and is not restricted to the point mutation, deletion or insertion of one base per pegRNA. A possible list of inputs could look like this:
       </p>
 
@@ -124,7 +134,7 @@ code_style {
         </code_style>
       </div>
 
-      <p style="text-align: justify">
+      <p>
       The above input list would produce
       </p>
 
@@ -136,15 +146,19 @@ code_style {
       </ul>
       </p>
 
-      <p style="text-align: justify">
+      <p>
       If the computation is successful, the resulting sequences will be directly forwarded to the <a href="#PTG_design">PTG design</a>. Currently, PolyGEN does not support including edits of different types in one pegRNA. 
       </p>
       
-      <p style="text-align: justify">
+      <p>
       The PE mode can be switched between PE2 and PE3. In PE2 mode, PolyGEN will only design the pegRNA that is intended to perform the desired edit. In PE3 mode, PolyGEN will additionally design a gRNA, which will nick the unedited strand to increase edit incorporation efficiency. For more information, read Anzalone et al. (2019).
       </p>
       
     </div> 
+  </div>
+  
+  <div class="text-right">
+    <a href="#">Back to top</a>
   </div>
   
   <br />
