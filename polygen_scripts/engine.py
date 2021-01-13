@@ -13,29 +13,6 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
 
-#The following is a copyright notice by the authors of iBioCAD, from which
-#substantial portions of this code were adopted and modified:
-
-#Copyright (c) 2019 Scott Weisberg
-
-#Permission is hereby granted, free of charge, to any person obtaining a copy
-#of this software and associated documentation files (the "Software"), to deal
-#in the Software without restriction, including without limitation the rights
-#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#copies of the Software, and to permit persons to whom the Software is
-#furnished to do so, subject to the following conditions:
-
-#The above copyright notice and this permission notice shall be included in all
-#copies or substantial portions of the Software.
-
-#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-#SOFTWARE.
-
 
 def make_session_id():
         id_one = {1:'A',2:'B',3:'C',4:'D',5:'E',
@@ -75,6 +52,7 @@ class InvalidUsage(Exception):
         rv['message'] = self.message
         return rv
 
+#Copyright (c) 2019 Scott Weisberg
 class Part:
     def __init__(self,name,type,sequence):
         self.name = name
@@ -86,7 +64,6 @@ class Part:
     bridge_with_previous_part = ""
     primer_forward_tm = 0
     primer_reverse_tm = 0
-    
 def builds(parts_list):
     import copy
     builds_list = []
@@ -236,7 +213,8 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                     for overhang in golden_gate_overhangs:
                         if overhang in cov_list[x+1]:
                             seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
-
+                            
+        #Copyright (c) 2019 Scott Weisberg
         combs = []
         for x in itertools.product(*seq_matches):
             combs.append(x)
@@ -247,6 +225,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     return None
 
 
+#Copyright (c) 2019 Scott Weisberg
 # Perform scarless Golden Gate assembly computation with provided parts
 def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_gg='ptg'):
     '''
