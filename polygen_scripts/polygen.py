@@ -1,5 +1,8 @@
 from flask import Flask, redirect, url_for, render_template, request, Response
-import os
+from io import BytesIO
+from zipfile import ZipFile
+from datetime import date
+import os, tempfile
 
 from engine import *
     
@@ -11,12 +14,12 @@ app.secret_key = 'ee839687a282e6493054c86e00e86925dc04de931acf4aed'
 
 @app.route("/")
 def home():
-    return render_template("index.html", content="Testing")
+    return render_template("index.html")
 
 
 @app.route("/learn")
 def learn():
-    return render_template("learn_more.html", content="Testing")
+    return render_template("learn_more.html")
 
 
 @app.route("/ptg", methods=["POST","GET"])
@@ -55,7 +58,8 @@ def sequence():
                     element_list.append(e)
                 PTG_structure.append(element_list)  
 
-            session['out'],ftrs,session['msg'],session['primers'] = runall(PTG_structure, **runall_args)
+            session['out'],session['full_seq'],session['ftrs'],session['msg'],session['primers'] = runall(PTG_structure, **runall_args)
+            
             if session['msg'] == 'comb_error':
                 return render_template("sequence.html", PTG_transfer=session.get('PTG_transfer', None), session=session)
         
@@ -121,16 +125,29 @@ def serve_primers():
     csv += 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
     for c,fragment in enumerate(session['out']):
         csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
+    
+    sr = SeqRecord(Seq(session['full_seq'], alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'])
+    for ftr in session['ftrs']:
+        sr.features.append(ftr)
+    
+    in_memory = BytesIO()
+    zf = ZipFile(in_memory, mode='w')
+    zf.writestr("oligos.csv", csv)
+    zf.writestr("sequence.gb", sr.format('genbank'))
+    zf.close()
+    in_memory.seek(0)
+    
+    outpt = in_memory.read()
+    
     return Response(
-        csv,
-        mimetype="text/csv",
-        headers={"Content-disposition":
-                 "attachment; filename=%s_oligos.csv"%session['PTG_name']})
+        outpt,
+        mimetype="application/zip",
+        headers={'Content-Disposition': 'attachment;filename=pg_%s_%s.zip' %(session['PTG_name'], str(date.today()))})
                  
 
 @app.route("/impressum")
 def impress():
-    return render_template("impressum.html", content="Testing")
+    return render_template("impressum.html")
 
 
 @app.route("/success")

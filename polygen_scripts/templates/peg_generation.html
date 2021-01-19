@@ -28,17 +28,17 @@
   <div class="form-group">
     <div class="row">
       <div class="col-11">
-        <label for="exampleFormControlInput1">PEG edits</label>
+        <label for="exampleFormControlInput1">PE edits</label>
         <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut" value="{{ session['PEG_edits'] }}" style="background-color:{{ session['clr']['edits'] }}">
       </div>
       <div class="col-1">
         <div class="row">
-        <label for="exampleFormControlInput2">PEG mode</label>
+        <label for="exampleFormControlInput2">PE mode</label>
         </div>
         <div class="row">
         <select id="mode" name="mode">
           <option value="PE2">PE2</option>
-          <option value="PE3">PE3</option>
+          <option value="PE3" selected="selected">PE3</option>
         </select>
         </div>
       </div>

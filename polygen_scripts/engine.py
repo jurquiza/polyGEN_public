@@ -817,5 +817,5 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
             else:
                 full_sequence += o.sequence[9:-13]
 
-    return outpt,full_sequence,msg,oligos
+    return outpt,full_sequence,feat,msg,oligos
 

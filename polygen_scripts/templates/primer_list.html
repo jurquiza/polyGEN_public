@@ -7,8 +7,12 @@
       <p style="color:red;"> {{ session['msg'] }} </p>
     {% endif %}
   </div>
-  <div class="form-group" align="center">
-    <a href={{ url_for('serve_primers') }} class="btn btn-primary">Download CSV</a>
+  <div class="row">
+    <div class="col">
+      <div class="form-group" align="center">
+        <a href={{ url_for('serve_primers') }} class="btn btn-primary">Download</a>
+      </div>
+    </div>
   </div>
   <div class="row">
     <div class="col">
@@ -17,8 +21,8 @@
           <tr>
             <th scope="col">Fragment ID</th>
             <th scope="col">Fragment type</th>
-            <th scope="col">Forward Primer in 5'->3'</th>
-            <th scope="col">Reverse Primer in 5'->3'</th>
+            <th scope="col">Forward Primer in 5' <span>&#8594;</span> 3'</th>
+            <th scope="col">Reverse Primer in 5' <span>&#8594;</span> 3'</th>
           </tr>
         </thead>
         <tbody>
