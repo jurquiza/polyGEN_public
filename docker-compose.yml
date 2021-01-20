@@ -6,5 +6,5 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./polygen:/scripts/
+      - ./polygen_scripts:/scripts/
     working_dir: /scripts/
