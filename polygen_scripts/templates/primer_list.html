@@ -1,28 +1,44 @@
 {% extends "base.html" %}
+
 {% block table %}
+<div class="container">
+  <div class="row">
+    {% if session['msg'] %}
+      <p style="color:red;"> {{ session['msg'] }} </p>
+    {% endif %}
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="form-group" align="center">
+        <a href={{ url_for('serve_primers') }} class="btn btn-primary">Download</a>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Fragment ID</th>
+            <th scope="col">Fragment type</th>
+            <th scope="col">Forward Primer in 5' <span>&#8594;</span> 3'</th>
+            <th scope="col">Reverse Primer in 5' <span>&#8594;</span> 3'</th>
+          </tr>
+        </thead>
+        <tbody>
 
-{% if session['msg']=='comb_warn' %}
-  <p style="color:red;">The given combination of existing overhangs is not compatible with an optimal overhang set. Computed the best overhang set not including the given existing overhangs. There might be interference between overhangs. </p>
-{% endif %}
-<table class="table">
-<thead>
-  <tr>
-    <th scope="col">Oligo</th>
-    <th scope="col">Fragment</th>
-    <th scope="col">Forward</th>
-    <th scope="col">Reverse</th>
-  </tr>
-</thead>
-<tbody>
-{% for fragment in out %}
-<tr>
-  <th scope="row" > {{session['PTG_oligo']}}{{loop.index0}} </th>
-  <td> {{fragment.name}} </td>
-  <td> {{fragment.primer_forward}} </td>
-  <td> {{fragment.primer_reverse}} </td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+        {% for fragment in session['out'] %}
+        <tr>
+          <th scope="row" > {{session['PTG_name']}}_{{loop.index0}} </th>
+          <td> {{fragment.type}} </td>
+          <td> {{fragment.primer_forward}} </td>
+          <td> {{fragment.primer_reverse}} </td>
+        </tr>
+        {% endfor %}
 
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

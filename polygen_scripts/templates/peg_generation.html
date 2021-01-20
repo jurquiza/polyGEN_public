@@ -1,33 +1,57 @@
 {% extends "base.html" %}
 
+{% block title %} Preliminary pegRNA proposal {% endblock %}
+
 {% block content %}
 <div class="container">
 <form action='#' method='post'>
+  <div class="row">
+    <div class="col">
+    <div class="text-center">
+      {% if session['msg'] %}
+        <p style="color: #FA5858; font-weight:bold">{{ session['msg'] }}</p>
+      {% endif %}
+    </div>
+    </div>
+  </div>
+  <div style="background-color: #EFF5FB; border-radius: 5px; padding: 10px">
   <div class="form-group">
     <label for="exampleFormControlTextarea1">Sequence to be edited</label>
-    <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
-    placeholder='e.g. 100 bp sequence'></textarea>
+    {% if PEG_transfer %}
+      <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
+    placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}">{{ PEG_transfer }}</textarea>
+    {% else %}
+      <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
+    placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}"></textarea>
+    {% endif %}
   </div>
   <div class="form-group">
     <div class="row">
       <div class="col-11">
-        <label for="exampleFormControlInput1">PEG edits</label>
-        <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut">
+        <label for="exampleFormControlInput1">PE edits</label>
+        <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut" value="{{ session['PEG_edits'] }}" style="background-color:{{ session['clr']['edits'] }}">
       </div>
       <div class="col-1">
         <div class="row">
-        <label for="exampleFormControlInput2">PEG mode</label>
+        <label for="exampleFormControlInput2">PE mode</label>
         </div>
         <div class="row">
         <select id="mode" name="mode">
           <option value="PE2">PE2</option>
-          <option value="PE3">PE3</option>
+          <option value="PE3" selected="selected">PE3</option>
         </select>
         </div>
       </div>
     </div>
   </div>
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+  </div>
 </form>
 </div>
 

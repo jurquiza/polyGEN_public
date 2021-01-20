@@ -7,16 +7,32 @@
 <div class="container">
 <form action='#' method='post'>
   <div class="row">
+    <div class="col">
+      <div class="text-center">
+        {% if session['msg'] %}
+          <p style="color: #FA5858; font-weight:bold">{{ session['msg'] }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div style="background-color: #EFF5FB; border-radius: 5px; padding: 10px">
+  <div class="row">
     <div class="col-6">
       <div class="form-group">
         <label for="ControlInput1">Polycistron Name</label>
-        <input type="text" name="PTG_name" class="form-control" id="ControlInput1" placeholder="e.g. pegUU">
+        <input type="text" name="PTG_name" class="form-control" id="ControlInput1" placeholder="e.g. pegUU" value="{{ session['PTG_name'] }}">
       </div>
     </div>
-    <div class="col-6">
+    <div class="col-3">
       <div class="form-group">
         <label for="ControlInput2">Oligos prefix</label>
-        <input type="text" name="oligo_prefix" class="form-control" id="ControlInput2" placeholder="e.g. oUU">
+        <input type="text" name="oligo_prefix" class="form-control" id="ControlInput2" placeholder="e.g. oUU" value="{{ session['oligo_prefix'] }}">
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="form-group">
+        <label for="Input_oli_index">Starting index</label>
+        <input type="text" name="oligo_index" class="form-control" id="Input_oli_index" placeholder="e.g. 0291" value="{{ session['oligo_index'] }}" style="background-color:{{ session['clr']['oligo_index'] }}">
       </div>
     </div>
   </div>
@@ -24,55 +40,66 @@
   <div class="row">
     <div class="col-5">
       <label for="slider-input">T<sub>M</sub> range</label>
-      <script src="//cdn.bootcss.com/noUiSlider/8.5.1/nouislider.js"></script>
+      <script src="{{url_for('static', filename='nouislider_materialize.js')}}"></script>
       <div id="slider"></div>
     </div>
     <div class="col-1">
       <div class="form-group">
-        <input type="number" name="min_temp" class="form-control" id="ControlInputMinT">
+        <input type="text" name="min_temp" class="form-control" id="ControlInputMinT" style="color: #FFFFFF">
       </div>
       <div class="form-group">
-        <input type="number" name="max_temp" class="form-control" id="ControlInputMaxT">
-      </div>
-    </div>
-    <div class="col-2">
-      <div class="form-group">
-        <label for="ControlInputLen">Max. static ann. len.</label>
-        <input type="number" name="max_len" class="form-control" id="ControlInputLen" placeholder="30">
+        <input type="text" name="max_temp" class="form-control" id="ControlInputMaxT" style="color: #FFFFFF">
       </div>
     </div>
     <div class="col-2">
       <div class="form-group">
-        <label for="ControlInputbb">Border overhangs</label>
-        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt">
+        <label for="ControlInputbb">Border linkers</label>
+        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
     <div class="col-2">
       <div class="form-group">
-        <label for="ControlInputAdd">Additional overhangs</label>
-        <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None">
+        <label for="ControlInputAdd">Additional linkers</label>
+        <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['add_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div> 
+    <div class="col-2">
+      <div class="form-group">
+        <label for="poltype_input">Type of polycistron</label>
+        <select name="poltype_input" id="poltype_input" class="form-control" style="background-color:{{ session['clr']['poltype_input'] }}">
+          <option value="ptg">PTG</option>
+          <option value="cpf1">Cpf1</option>
+        </select>
+      </div>
+    </div>
   </div>   
 
   <div class="row">
     <div class="col-12">
       <div class="form-group">
-        <label for="ControlTextarea1">PTG description (input)</label>
-        {% if session['msg'] == 'comb_error' %}
-            <p style="color:red;">The variable sequences of these parts are not compatible with any experimentally validated overhang combinations</p>
-        {% endif %}
+        <label for="ControlTextarea1">Polycistron description (required)</label>
         {% if PTG_transfer %}
-        <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC'>{{PTG_transfer}}</textarea>
+            <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC' style="background-color:{{ session['clr']['sequence_spacers'] }}">{{PTG_transfer}}</textarea>
         {% else %}
-            <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5"
-        placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC'></textarea>
+            <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC' style="background-color:{{ session['clr']['sequence_spacers'] }}"></textarea>
         {% endif %}
       </div>
     </div>
   </div>
-  <div class="form-group">
-    <button type="submit" class="btn btn-primary">Submit</button>
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <button type="submit" name="submit_button" class="btn btn-primary" value="submit">Submit</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <div class="text-right">
+          <button type="submit" name="submit_button" class="btn btn-outline-secondary" value="reset" style="background-color: #FFFFFF">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 </form>
 </div>
