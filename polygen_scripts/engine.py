@@ -797,6 +797,8 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
             raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
         elif re.search(r'^[ACGTacgt]*$', e[2]) is None:
             raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+        elif e[1] == 'gRNA' and len(e[2]) != 20:
+            raise InvalidUsage("gRNA spacers must be 20 bp long", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
     
     for lnk in bb_overlaps+additional_overhangs:
         if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
