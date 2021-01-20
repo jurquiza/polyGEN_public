@@ -790,6 +790,7 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
     additional_overhangs: array, defaults to []. Additional linkers in the destination plasmid.
     poltype_run: string, defaults to 'ptg'. Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1'
     '''
+    
     for e in arr:
         if len(e) != 3:
             raise InvalidUsage("Invalid input syntax", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
@@ -815,7 +816,9 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
             oligos.append(o.primer_forward)
             oligos.append(o.primer_reverse)
             if c == 0:
-                full_sequence += o.sequence[13:-13]
+                full_sequence += o.sequence[:-13]
+            elif c == len(outpt)-1:
+                full_sequence += o.sequence[9:]
             else:
                 full_sequence += o.sequence[9:-13]
 

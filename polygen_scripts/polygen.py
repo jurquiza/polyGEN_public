@@ -1,7 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, Response
 from io import BytesIO
 from zipfile import ZipFile
-from datetime import date
+from datetime import date,time
 import os, tempfile
 
 from engine import *
@@ -126,7 +126,7 @@ def serve_primers():
     for c,fragment in enumerate(session['out']):
         csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
     
-    sr = SeqRecord(Seq(session['full_seq'], alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'])
+    sr = SeqRecord(seq=Seq(session['full_seq'], alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
     for ftr in session['ftrs']:
         sr.features.append(ftr)
     
