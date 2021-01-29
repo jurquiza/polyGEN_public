@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # PolyGEN documentation build configuration file, created by
-# sphinx-quickstart on Mon Jan 25 15:04:54 2021.
+# sphinx-quickstart on Wed Jan 27 16:26:36 2021.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -31,7 +31,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc',
+    'sphinx.ext.githubpages']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -47,8 +48,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PolyGEN'
-copyright = '2021, Christoph Wagner, Uriel Urquiza'
-author = 'Christoph Wagner, Uriel Urquiza'
+copyright = '2021, Christoph Wagner, Uriel Urquiza, Matias Zurbriggen'
+author = 'Christoph Wagner, Uriel Urquiza, Matias Zurbriggen'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -69,7 +70,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -140,7 +141,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PolyGEN.tex', 'PolyGEN Documentation',
-     'Christoph Wagner, Uriel Urquiza', 'manual'),
+     'Christoph Wagner, Uriel Urquiza, Matias Zurbriggen', 'manual'),
 ]
 
 
