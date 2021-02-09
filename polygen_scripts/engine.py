@@ -163,8 +163,8 @@ def Diff(li1, li2):
     
     
 # Set template sequences tRNA and gRNA scaffold
-tRNA = 'AACAAAGCACCAGTGGTCTAGTGGTAGAATAGTACCCTGCCACGGTACAGACCCGGGTTCGATTCCCGGCTGGTGCA'
-scaffld = 'GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGC'
+tRNA = 'aacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca'
+scaffld = 'gttttagagctagaaatagcaagttaaaataaggctagtccgttatcaacttgaaaaagtggcaccgagtcggtgc'
 
 
 #Optimize the overhangs used in Golden Gate assembly
@@ -188,16 +188,16 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     if poltype_opt=='ptg':
         for x in parts_list:
             if x.type == 'pegRNA':
-                oh_list.append([x.sequence[:20],x.sequence[96:]])
+                oh_list.append([x.sequence[:x.sequence.find(scaffld)],x.sequence[x.sequence.find(scaffld)+len(scaffld):]])
             elif x.type == 'gRNA':
-                oh_list.append(x.sequence[:20])
+                oh_list.append(x.sequence[:x.sequence.find(scaffld)])
             elif x.type == 'smRNA':
                 oh_list.append(x.sequence[:-len(tRNA)])
             else: # if part is tRNA
                 oh_list.append('plc')
     elif poltype_opt=='cpf1':
         for x in parts_list:
-            oh_list.append(x.sequence[:20])
+            oh_list.append(x.sequence[:x.sequence.find(scaffld)])
     
     # Starting in the middle of the variable sequences and moving outwards, find overhang combinations
     for cov in range(2,max([int(np.ceil(np.true_divide(len(prt),2))) for prt in flattn(oh_list)])):
@@ -315,15 +315,17 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     if poltype_gg=='ptg':
         mmry = 13
         for part in parts_list:
+            print(part.name)
+            print(part.sequence)
             part.sequence = part.sequence.lower()
             ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.name))
             if part.type == 'pegRNA':
-                ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+20, strand=1), type='spacer'))
-                ftrs.append(SeqFeature(FeatureLocation(mmry+96, mmry+len(part.sequence)-13, strand=1), type='RT template'))
+                ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
+                ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(scaffld)+len(scaffld), mmry+len(part.sequence)-13, strand=1), type='RT template'))
                 ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-13, mmry+len(part.sequence), strand=1), type='PBS'))
             elif part.type == 'gRNA':
-                ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+20, strand=1), type='spacer'))
-                ftrs.append(SeqFeature(FeatureLocation(mmry+20+len(scaffld), mmry+len(part.sequence), strand=1), type='tRNA'))
+                ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
+                ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
             elif part.type == 'smRNA':
                 ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence)-len(tRNA), strand=1), type='smRNA'))
                 ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-len(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
@@ -334,7 +336,7 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
         for part in parts_list:
             part.sequence = part.sequence.lower()
             ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.name))
-            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+20, strand=1), type='spacer'))
+            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
             mmry += len(part.sequence)
             
 
@@ -871,8 +873,8 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
             raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
         elif re.search(r'^[ACGTacgt]*$', e[2]) is None:
             raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
-        elif e[1] == 'gRNA' and len(e[2]) != 20:
-            raise InvalidUsage("gRNA spacers must be 20 bp long", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+        #elif e[1] == 'gRNA' and len(e[2]) != 20:
+        #    raise InvalidUsage("gRNA spacers must be 20 bp long", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
     
     for lnk in bb_overlaps+additional_overhangs:
         if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
