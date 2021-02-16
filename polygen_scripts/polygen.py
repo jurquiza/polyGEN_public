@@ -31,6 +31,7 @@ def sequence():
         if request.form['submit_button'] == 'submit':
             runall_args = {}
             runall_args['poltype_run'] = request.form["poltype_input"]
+            runall_args['enzm'] = request.form['enzm_input']
             session['PTG_name'] = request.form["PTG_name"]
             session['oligo_prefix'] = request.form["oligo_prefix"]
             session['oligo_index'] = request.form["oligo_index"]
@@ -132,8 +133,8 @@ def serve_primers():
     
     in_memory = BytesIO()
     zf = ZipFile(in_memory, mode='w')
-    zf.writestr("oligos.csv", csv)
-    zf.writestr("sequence.gb", sr.format('genbank'))
+    zf.writestr(session['PTG_name']+"_oligos.csv", csv)
+    zf.writestr(session['PTG_name']+".gb", sr.format('genbank'))
     zf.close()
     in_memory.seek(0)
     

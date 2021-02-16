@@ -308,7 +308,7 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     msg = None
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
-    enzms={'bsai': ['taggtctcc', 'tgagacccg']}
+    enzms={'bsai': ['gaggtctcg', 'ggagaccga'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'gaatgtttagcatcgctt']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi)
 
     
     # Go through parts and write all known annotations into list
@@ -318,8 +318,6 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     if poltype_gg=='ptg':
         mmry = 13
         for part in parts_list:
-            print(part.name)
-            print(part.sequence)
             part.sequence = part.sequence.lower()
             ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.name))
             if part.type == 'pegRNA':
