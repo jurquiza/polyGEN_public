@@ -20,18 +20,21 @@
     <div class="col-6">
       <div class="form-group">
         <label for="ControlInput1">Polycistron Name</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Insert a meaningful identifier for your polycistron here. The name will be propagated to the results. If nothing is specified, this will default to 'PTG'".></span>
         <input type="text" name="PTG_name" class="form-control" id="ControlInput1" placeholder="e.g. pegUU" value="{{ session['PTG_name'] }}">
       </div>
     </div>
     <div class="col-3">
       <div class="form-group">
         <label for="ControlInput2">Oligos prefix</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify a prefix for your generated oligos here. This can be your initials. The oligos will receive successive numbering with this prefix. If nothing is specified, this will default to 'o'."></span>
         <input type="text" name="oligo_prefix" class="form-control" id="ControlInput2" placeholder="e.g. oUU" value="{{ session['oligo_prefix'] }}">
       </div>
     </div>
     <div class="col-3">
       <div class="form-group">
         <label for="Input_oli_index">Starting index</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the starting index of your successive oligo numbering here. If nothing is specified, this will default to 0."></span>
         <input type="text" name="oligo_index" class="form-control" id="Input_oli_index" placeholder="e.g. 0291" value="{{ session['oligo_index'] }}" style="background-color:{{ session['clr']['oligo_index'] }}">
       </div>
     </div>
@@ -40,6 +43,7 @@
   <div class="row">
     <div class="col-5">
       <label for="slider-input">T<sub>M</sub> range</label>
+      <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the temperature range you want your oligos to fall into. The oligos will not necessarily stick to these boundaries, depending on the specified sequences."></span>
       <script src="{{url_for('static', filename='nouislider_materialize.js')}}"></script>
       <div id="slider"></div>
     </div>
@@ -51,26 +55,46 @@
         <input type="text" name="max_temp" class="form-control" id="ControlInputMaxT" style="color: #FFFFFF">
       </div>
     </div>
-    <div class="col-2">
+    <div class="col-6">
+    <div class="row">
+    <div class="col-6">
       <div class="form-group">
         <label for="ControlInputbb">Border linkers</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the 4 bp linkers from BsaI digestion, which should flank the polycistron in your destination plasmid."></span>
         <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
-    <div class="col-2">
+    <div class="col-6">
       <div class="form-group">
         <label for="ControlInputAdd">Additional linkers</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify any additional 4 bp BsaI linkers apart from the border linkers, which exist in your destination plasmid."></span>
         <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['add_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div> 
-    <div class="col-2">
+    </div>
+    <div class="row">
+    <div class="col-6">
       <div class="form-group">
-        <label for="poltype_input">Type of polycistron</label>
+        <label for="poltype_input">Polycistron type</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="You can choose between the PTG and the Cpf1 polycistronic architecture, depending on your type of experiment. The PTG architecture depends on tRNAs sitting between your custom RNAs, which will induce excision, while the Cpf1 architecture works depends on the Cpf1 enzyme recognizing gRNAs. PTGs can harbour any small RNA, while the Cpf1 architecture is restricted to gRNAs."></span>
         <select name="poltype_input" id="poltype_input" class="form-control" style="background-color:{{ session['clr']['poltype_input'] }}">
           <option value="ptg">PTG</option>
           <option value="cpf1">Cpf1</option>
         </select>
       </div>
+    </div>
+    <div class="col-6">
+      <div class="form-group">
+        <label for="enzm_input">Enzyme</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the type II restriction enzyme you want to use for the Golden Gate assembly. This will be important for designing the primers for PCR. The default is BsaI."></span>
+        <select name="enzm_input" id="enzm_input" class="form-control">
+          <option value="bsai">BsaI</option>
+          <option value="bsmbi">BsmBI</option>
+          <option value="btgzi">BtgZI</option>
+        </select>
+      </div>
+    </div>
+    </div>
     </div>
   </div>   
 
@@ -78,6 +102,7 @@
     <div class="col-12">
       <div class="form-group">
         <label for="ControlTextarea1">Polycistron description (required)</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the contents of your polycistron here. The individual parts you specify will be concatenated according to the chosen polycistronic architecture. You may use gRNAs, pegRNAs or arbitrary small RNAs (abbreviated smRNA). First, state the type of RNA, followed by a semicolon and then state the corresponding sequence. Separate several parts by a vertical line. For smRNAs and pegRNAs, provide the entire sequence. For gRNAs, only provide the spacer."></span>
         {% if PTG_transfer %}
             <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC' style="background-color:{{ session['clr']['sequence_spacers'] }}">{{PTG_transfer}}</textarea>
         {% else %}

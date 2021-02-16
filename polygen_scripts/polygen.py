@@ -1,7 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, Response
 from io import BytesIO
 from zipfile import ZipFile
-from datetime import date
+from datetime import date,time
 import os, tempfile
 
 from engine import *
@@ -14,7 +14,7 @@ app.secret_key = 'ee839687a282e6493054c86e00e86925dc04de931acf4aed'
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("main.html")
 
 
 @app.route("/learn")
@@ -31,6 +31,7 @@ def sequence():
         if request.form['submit_button'] == 'submit':
             runall_args = {}
             runall_args['poltype_run'] = request.form["poltype_input"]
+            runall_args['enzm'] = request.form['enzm_input']
             session['PTG_name'] = request.form["PTG_name"]
             session['oligo_prefix'] = request.form["oligo_prefix"]
             session['oligo_index'] = request.form["oligo_index"]
@@ -126,14 +127,14 @@ def serve_primers():
     for c,fragment in enumerate(session['out']):
         csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
     
-    sr = SeqRecord(Seq(session['full_seq'], alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'])
+    sr = SeqRecord(seq=Seq(session['full_seq'], alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
     for ftr in session['ftrs']:
         sr.features.append(ftr)
     
     in_memory = BytesIO()
     zf = ZipFile(in_memory, mode='w')
-    zf.writestr("oligos.csv", csv)
-    zf.writestr("sequence.gb", sr.format('genbank'))
+    zf.writestr(session['PTG_name']+"_oligos.csv", csv)
+    zf.writestr(session['PTG_name']+".gb", sr.format('genbank'))
     zf.close()
     in_memory.seek(0)
     

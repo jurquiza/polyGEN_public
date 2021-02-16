@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  polygen:
+    build: .
+    image: uurquizag/polygen:a0.1
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./polygen_scripts:/scripts/
+    working_dir: /scripts/
