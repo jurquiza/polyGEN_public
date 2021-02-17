@@ -40,10 +40,10 @@
     </div>
   </div>
 
-  <div class="row">
+  <div class="row align-items-center">
     <div class="col-5">
       <label for="slider-input">T<sub>M</sub> range</label>
-      <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the temperature range you want your oligos to fall into. The oligos will not necessarily stick to these boundaries, depending on the specified sequences."></span>
+      <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the temperature range you want your oligos to fall into in full length. The oligos will not necessarily stick to these boundaries, depending on the specified sequences."></span>
       <script src="{{url_for('static', filename='nouislider_materialize.js')}}"></script>
       <div id="slider"></div>
     </div>
@@ -79,7 +79,7 @@
         <span class="fa fa-info-circle" data-toggle='tooltip' title="You can choose between the PTG and the Cpf1 polycistronic architecture, depending on your type of experiment. The PTG architecture depends on tRNAs sitting between your custom RNAs, which will induce excision, while the Cpf1 architecture works depends on the Cpf1 enzyme recognizing gRNAs. PTGs can harbour any small RNA, while the Cpf1 architecture is restricted to gRNAs."></span>
         <select name="poltype_input" id="poltype_input" class="form-control" style="background-color:{{ session['clr']['poltype_input'] }}">
           <option value="ptg">PTG</option>
-          <option value="cpf1">Cpf1</option>
+          <option value="ca">CA</option>
         </select>
       </div>
     </div>
@@ -91,6 +91,7 @@
           <option value="bsai">BsaI</option>
           <option value="bsmbi">BsmBI</option>
           <option value="btgzi">BtgZI</option>
+          <option value="bbsi">BbsI</option>
         </select>
       </div>
     </div>

@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, Response
+from flask import Flask, redirect, url_for, render_template, request, Response, send_from_directory
 from io import BytesIO
 from zipfile import ZipFile
 from datetime import date,time
@@ -65,7 +65,7 @@ def sequence():
                 return render_template("sequence.html", PTG_transfer=session.get('PTG_transfer', None), session=session)
         
             if not session['PTG_name']:
-                session['PTG_name'] = 'PTG'
+                session['PTG_name'] = request.form['poltype_input'].upper()
             if not session['oligo_prefix']:
                 session['oligo_prefix'] = 'o'
             if not session['oligo_index']:
@@ -144,7 +144,7 @@ def serve_primers():
         outpt,
         mimetype="application/zip",
         headers={'Content-Disposition': 'attachment;filename=pg_%s_%s.zip' %(session['PTG_name'], str(date.today()))})
-                 
+
 
 @app.route("/impressum")
 def impress():

@@ -165,6 +165,7 @@ def Diff(li1, li2):
 # Set template sequences tRNA and gRNA scaffold
 tRNA = 'aacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca'
 scaffld = 'gttttagagctagaaatagcaagttaaaataaggctagtccgttatcaacttgaaaaagtggcaccgagtcggtgc'
+DR = 'aatttctactgttgtagat'
 
 
 #Optimize the overhangs used in Golden Gate assembly
@@ -176,7 +177,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     :type parts_list: list
     :param free_overhangsets: An array of arrays containing 4 bp linkers
     :type free_overhangsets: list
-    :param poltype_opt: The type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1', defaults to 'ptg'
+    :param poltype_opt: The type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
     :type poltype_opt: str, optional
     
     :return: A tuple of sequences indicating the linker between two adjacent parts. The sequence spans from the start of the respective variable sequence to the end of the determined 4 bp linker. 
@@ -195,9 +196,9 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                 oh_list.append(x.sequence[:-len(tRNA)])
             else: # if part is tRNA
                 oh_list.append('plc')
-    elif poltype_opt=='cpf1':
+    elif poltype_opt=='ca':
         for x in parts_list:
-            oh_list.append(x.sequence[:x.sequence.find(scaffld)])
+            oh_list.append(x.sequence[x.sequence.find(DR)+len(DR):])
     
     # Starting in the middle of the variable sequences and moving outwards, find overhang combinations
     for cov in range(2,max([int(np.ceil(np.true_divide(len(prt),2))) for prt in flattn(oh_list)])):
@@ -217,7 +218,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                     cov_list.append(oh)
                 else:
                     cov_list.append(oh[int(np.ceil(np.true_divide(len(oh),2)))-cov:int(np.ceil(np.true_divide(len(oh),2)))+cov])
-
+                    
         # Find possible overhang combinations
         if poltype_opt=='ptg':
             for s in free_overhangsets:
@@ -259,15 +260,15 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                             elif parts_list[x+1].type == 'smRNA':
                                 if overhang in cov_list[x+1]:
                                     seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
-        elif poltype_opt=='cpf1':
+        elif poltype_opt=='ca':
             for s in free_overhangsets:
                 golden_gate_overhangs=s
                 seq_matches = []
                 for x in range(len(parts_list)-1):
                     seq_matches.append([])
                     for overhang in golden_gate_overhangs:
-                        if overhang in cov_list[x+1]:
-                            seq_matches[x].append(oh_list[x+1][:oh_list[x+1].find(overhang)+4])
+                        if overhang in cov_list[x]:
+                            seq_matches[x].append(oh_list[x][:oh_list[x].find(overhang)+4])
                             
         #Copyright (c) 2019 Scott Weisberg
         combs = []
@@ -296,7 +297,7 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     :type bb_overlaps: list, optional
     :param additional_overhangs: Additional linkers in the destination plasmid, defaults to []
     :type additional_overhangs: list, optional
-    :param poltype_gg: Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1', defaults to 'ptg'
+    :param poltype_gg: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
     :type poltype_gg: str, optional
     :param enzm: Type II restriction enzyme to use for the Golden Gate assembly. Defaults to 'bsai'
     :type enzm: str, optional
@@ -308,38 +309,31 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     msg = None
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
-    enzms={'bsai': ['gaggtctcg', 'ggagaccga'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'gaatgtttagcatcgctt']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi)
+    enzms={'bsai': ['gaggtctcg', 'ggagaccga'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'gaatgtttagcatcgctt'], 'bbsi': ['agaagacag', 'gggtcttcg']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
 
     
     # Go through parts and write all known annotations into list
     new_parts_list = []
     ftrs = []
     
-    if poltype_gg=='ptg':
-        mmry = 13
-        for part in parts_list:
-            part.sequence = part.sequence.lower()
-            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.name))
-            if part.type == 'pegRNA':
-                ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
-                ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(scaffld)+len(scaffld), mmry+len(part.sequence)-13, strand=1), type='RT template'))
-                ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-13, mmry+len(part.sequence), strand=1), type='PBS'))
-            elif part.type == 'gRNA':
-                ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
-                ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
-            elif part.type == 'smRNA':
-                ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence)-len(tRNA), strand=1), type='smRNA'))
-                ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-len(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
-            mmry += len(part.sequence)
-
-    elif poltype_gg=='cpf1':
-        mmry = 13
-        for part in parts_list:
-            part.sequence = part.sequence.lower()
-            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.name))
+    mmry = 13
+    for part in parts_list:
+        part.sequence = part.sequence.lower()
+        ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.name))
+        if part.type == 'pegRNA':
             ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
-            mmry += len(part.sequence)
-            
+            ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(scaffld)+len(scaffld), mmry+len(part.sequence)-13, strand=1), type='RT template'))
+            ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-13, mmry+len(part.sequence), strand=1), type='PBS'))
+        elif part.type == 'gRNA':
+            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
+            ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
+        elif part.type == 'smRNA':
+            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence)-len(tRNA), strand=1), type='smRNA'))
+            ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-len(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
+        if part.type == 'crRNA':
+            ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(DR)+len(DR), mmry+len(part.sequence), strand=1), type='spacer'))
+        mmry += len(part.sequence)
+
 
     # Iterate through overhang sets with increasing size until fitting one is found
     gg_opt = None
@@ -495,40 +489,36 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
                         parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                             
-    elif poltype_gg=='cpf1':
+    elif poltype_gg=='ca':
         for i in range(len(parts_list)):
             
             # If current part is first part, define forward primer with left backbone overlap and reverse primer ordinarily
             if i == 0:
-                if len(parts_list)==1:
-                    parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence[:max_annealing_len]
-                    parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + bb_overlaps[-1] + enzms[enzm][1])
-                    parts_list[i].sequence = parts_list[i].sequence + bb_overlaps[-1] + enzms[enzm][1]
-                else:
-                    parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence[:max_annealing_len]
-                    parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
-                    parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
-                    parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                    parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
+                parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + DR
+                parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence
+                
+                parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(DR):parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + DR
+                parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + parts_list[i+1].sequence
+                parts_list[i].sequence = parts_list[i].sequence[:parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                     
             # If current part is last part, define reverse primer with right backbone overlap and forward primer ordinarily
             elif i == len(parts_list)-1:
-                parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + bb_overlaps[-1] + enzms[enzm][1])
+                parts_list[i].primer_reverse = reverse_complement(DR + bb_overlaps[-1] + enzms[enzm][1])
                 parts_list[i].sequence = parts_list[i].sequence + bb_overlaps[-1] + enzms[enzm][1]
                 
             # If current part is not first or last part, do ordinary computation
             else:
-                if parts_list[i].type == 'gRNA':
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
-                    parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
-                    parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
-                    parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
+                parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(DR):parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + DR
+                parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + parts_list[i+1].sequence
+                parts_list[i].sequence = parts_list[i].sequence[:parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
+        
+        new_parts_list.append(parts_list)
+        return new_parts_list[0],ftrs,msg # If CA, skip the primer optimization step, since the DR is very short
                             
     new_parts_list.append(parts_list)
 
-        
     
     #Optimize primer Tm
     for parts_list in new_parts_list:
@@ -814,7 +804,7 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
     
     :param inserts: List of parts of the form [['name', 'type', 'sequence'],[...]]
     :type inserts: list
-    :param poltype_bldr: Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1', defaults to 'ptg'
+    :param poltype_bldr: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
     :type poltype_bldr: str, optional
     '''
     
@@ -834,15 +824,17 @@ def PTGbldr(inserts, poltype_bldr='ptg'):
     
         return PTG_parts
         
-    elif poltype_bldr=='cpf1':
-        Cpf1_parts = []
+    elif poltype_bldr=='ca':
+        CA_parts = []
         
         for c,prt in enumerate(inserts):
-            if prt[1] != 'gRNA':
-                raise InvalidUsage("Cpf1 can only process gRNAs", status_code=400, payload={'pge': 'sequence.html', 'box': 'poltype_input'})
-            Cpf1_parts.append(Part(prt[0], prt[1], str(prt[2]) + scaffld))
+            if prt[1] != 'crRNA':
+                raise InvalidUsage("ca can only process crRNAs", status_code=400, payload={'pge': 'sequence.html', 'box': 'poltype_input'})
+            CA_parts.append(Part(prt[0], prt[1], DR + str(prt[2])))
+        
+        CA_parts.append(Part('DR', 'DR', DR))
             
-        return Cpf1_parts
+        return CA_parts
 
 
 # Execute computation
@@ -860,7 +852,7 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
     :type bb_overlaps: list, optional
     :param additional_overhangs: Additional linkers in the destination plasmid, defaults to []
     :type additional_overhangs: list, optional
-    :param poltype_run: Type of polycistronic architecture to use. Must be one of 'ptg' or 'cpf1', defaults to 'ptg'
+    :param poltype_run: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
     :type poltype_run: str, optional
     :param enzm: Type II restriction enzyme to use for the Golden Gate assembly. Defaults to 'bsai'
     :type enzm: str, optional
@@ -872,7 +864,7 @@ def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], a
     for e in arr:
         if len(e) != 3:
             raise InvalidUsage("Invalid input syntax", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
-        elif e[1] not in ['gRNA', 'pegRNA', 'smRNA']:
+        elif e[1] not in ['gRNA', 'pegRNA', 'smRNA', 'crRNA']:
             raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
         elif re.search(r'^[ACGTacgt]*$', e[2]) is None:
             raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
