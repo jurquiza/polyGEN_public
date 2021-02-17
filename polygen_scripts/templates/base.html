@@ -49,6 +49,9 @@ label {
       <li class="nav-item active">
         <a class="nav-link" href="{{ url_for('learn') }}">Learn more</a>
       </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="{{ url_for('static', filename='build/html/index.html') }}">Documentation</a>
+      </li>
     </ul>
   </div>
   <img src="{{url_for('static',filename='isbd.png')}}" class="fluid" height="45" hspace="5" alt="Institute of Synthetic Biology logo">
