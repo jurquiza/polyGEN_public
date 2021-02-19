@@ -309,7 +309,7 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     msg = None
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
-    enzms={'bsai': ['gaggtctcg', 'ggagaccga'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'gaatgtttagcatcgctt'], 'bbsi': ['agaagacag', 'gggtcttcg']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['agaagacag', 'ctgtcttct']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
 
     
     # Go through parts and write all known annotations into list
