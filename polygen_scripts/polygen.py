@@ -140,6 +140,8 @@ def serve_primers():
     zf = ZipFile(in_memory, mode='w')
     zf.writestr(session['PTG_name']+"_oligos.csv", csv)
     zf.writestr(session['PTG_name']+".gb", sr.format('genbank'))
+    with open('protocol.txt') as f:
+        zf.writestr('protocol.txt', f.read())
     zf.close()
     in_memory.seek(0)
     
