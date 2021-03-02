@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, Response
+from flask import Flask, redirect, url_for, render_template, request, Response, send_from_directory
 from io import BytesIO
 from zipfile import ZipFile
 from datetime import date,time
@@ -26,12 +26,15 @@ def learn():
 def sequence():
     session['msg'] = None
     session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF'}
+    session['enzm_site'] = ['gaggtctcg', 'cgagacctc']
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['agaagacag', 'ctgtcttct']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
     
     if request.method == "POST":
         if request.form['submit_button'] == 'submit':
             runall_args = {}
             runall_args['poltype_run'] = request.form["poltype_input"]
             runall_args['enzm'] = request.form['enzm_input']
+            session['enzm_site'] = enzms[request.form['enzm_input']]
             session['PTG_name'] = request.form["PTG_name"]
             session['oligo_prefix'] = request.form["oligo_prefix"]
             session['oligo_index'] = request.form["oligo_index"]
@@ -45,6 +48,8 @@ def sequence():
             if session['add_ovrhng']:
                 runall_args['additional_overhangs'] = session["add_ovrhng"].split(';')
             
+            if session['PTG_transfer'] == '':
+                raise InvalidUsage("You must specify a polycistron description", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
             if session['oligo_index'] != '' and re.search(r'^[0-9]*$', session['oligo_index']) is None:
                 raise InvalidUsage("Starting index must be a number", status_code=400, payload={'pge': 'sequence.html', 'box': 'oligo_index'})
             
@@ -62,10 +67,10 @@ def sequence():
             session['out'],session['full_seq'],session['ftrs'],session['msg'],session['primers'] = runall(PTG_structure, **runall_args)
             
             if session['msg'] == 'comb_error':
-                return render_template("sequence.html", PTG_transfer=session.get('PTG_transfer', None), session=session)
+                return render_template("sequence.html", session=session)
         
             if not session['PTG_name']:
-                session['PTG_name'] = 'PTG'
+                session['PTG_name'] = request.form['poltype_input'].upper()
             if not session['oligo_prefix']:
                 session['oligo_prefix'] = 'o'
             if not session['oligo_index']:
@@ -135,6 +140,8 @@ def serve_primers():
     zf = ZipFile(in_memory, mode='w')
     zf.writestr(session['PTG_name']+"_oligos.csv", csv)
     zf.writestr(session['PTG_name']+".gb", sr.format('genbank'))
+    with open('protocol.txt') as f:
+        zf.writestr('protocol.txt', f.read())
     zf.close()
     in_memory.seek(0)
     
@@ -144,7 +151,7 @@ def serve_primers():
         outpt,
         mimetype="application/zip",
         headers={'Content-Disposition': 'attachment;filename=pg_%s_%s.zip' %(session['PTG_name'], str(date.today()))})
-                 
+
 
 @app.route("/impressum")
 def impress():
