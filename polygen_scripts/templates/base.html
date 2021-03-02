@@ -114,7 +114,7 @@ var input1 = document.getElementById('ControlInputMaxT');
 var inputs = [input0, input1];
 
 noUiSlider.create(slider, {
-    start: [55, 72],
+    start: [55, 65],
     step: 1,
     connect: [true,false,true],
     range: {
@@ -182,6 +182,16 @@ input0.addEventListener('change', function () {
 input1.addEventListener('change', function () {
     slider.noUiSlider.set([null, this.value]);
 });
+
+function toggle_visibility(id) {
+       var e = document.getElementById(id);
+       console.log(e.style.display)
+       if(e.style.display == '')
+          e.style.display = 'none';
+       else
+          e.style.display = '';
+   }
+
 </script>
 
 </html>

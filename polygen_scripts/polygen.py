@@ -25,7 +25,7 @@ def learn():
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
     session['msg'] = None
-    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF'}
+    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF', 'PTG_name': '#FFFFFF'}
     session['enzm_site'] = ['gaggtctcg', 'cgagacctc']
     enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['agaagacag', 'ctgtcttct']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
     
@@ -41,13 +41,19 @@ def sequence():
             session['PTG_transfer'] = request.form["sequence_spacers"]
             session['bb_ovrhng'] = request.form["bb_ovrhng"]
             session['add_ovrhng'] = request.form["add_ovrhng"]
+            session['max_ann_len'] = request.form['maxAnnLen']
         
             runall_args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
+            runall_args['bb_overlaps'] = ['tgcc', 'gttt']
             if session['bb_ovrhng']:
                 runall_args['bb_overlaps'] = session["bb_ovrhng"].split(';')
             if session['add_ovrhng']:
                 runall_args['additional_overhangs'] = session["add_ovrhng"].split(';')
+            if session['max_ann_len']:
+                runall_args['max_ann_len'] = int(session['max_ann_len'])
             
+            if '/' in session['PTG_name']:
+                raise InvalidUsage("Polycistron name may not contain a '/'", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_name'})
             if session['PTG_transfer'] == '':
                 raise InvalidUsage("You must specify a polycistron description", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
             if session['oligo_index'] != '' and re.search(r'^[0-9]*$', session['oligo_index']) is None:
@@ -64,10 +70,7 @@ def sequence():
                     element_list.append(e)
                 PTG_structure.append(element_list)  
 
-            session['out'],session['full_seq'],session['ftrs'],session['msg'],session['primers'] = runall(PTG_structure, **runall_args)
-            
-            if session['msg'] == 'comb_error':
-                return render_template("sequence.html", session=session)
+            session['plcstrn'],session['msg'] = runall(PTG_structure, **runall_args)
         
             if not session['PTG_name']:
                 session['PTG_name'] = request.form['poltype_input'].upper()
@@ -75,7 +78,15 @@ def sequence():
                 session['oligo_prefix'] = 'o'
             if not session['oligo_index']:
                 session['oligo_index'] = '0'
-        
+            
+            if request.form.get('borderPrimers'):
+                if runall_args['poltype_run'] == 'ptg':
+                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(runall_args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
+                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(runall_args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
+                if runall_args['poltype_run'] == 'ca':
+                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(runall_args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
+                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(runall_args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
+
             return render_template("primer_list.html", session=session)
             
         elif request.form['submit_button'] == 'reset':
@@ -122,18 +133,18 @@ def serve_primers():
     positions = len(session['oligo_index'])
     collapsed_index = int(session['oligo_index'])
     oligo_ids = []
-    for primer in session['primers']:
+    for primer in flattn([[i.primer_forward, i.primer_reverse] for i in session['plcstrn'].parts]):
         oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0'+str(positions)))
         csv += session['oligo_prefix']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
         collapsed_index += 1
     
     csv += '\nTable of fragments:\n'
     csv += 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
-    for c,fragment in enumerate(session['out']):
+    for c,fragment in enumerate(session['plcstrn'].parts):
         csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
     
-    sr = SeqRecord(seq=Seq(session['full_seq'], alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
-    for ftr in session['ftrs']:
+    sr = SeqRecord(seq=Seq(session['plcstrn'].sequence, alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
+    for ftr in session['plcstrn'].features:
         sr.features.append(ftr)
     
     in_memory = BytesIO()

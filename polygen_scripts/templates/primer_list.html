@@ -27,7 +27,7 @@
         </thead>
         <tbody>
 
-        {% for fragment in session['out'] %}
+        {% for fragment in session['plcstrn'].parts %}
         <tr>
           <th scope="row" > {{session['PTG_name']}}_{{loop.index0}} </th>
           <td> {{fragment.type}} </td>
