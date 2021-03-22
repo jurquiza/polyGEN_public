@@ -4,3 +4,10 @@ atggtgagcaagggcgaggagctgttcaccggggtggtgcccatcctggtcgagctggacggcgacgtaaacggccacaa
 
 
 at position 201 we can change a C for a T and get a EGFP that can be seen with protoplasts
+
+
+>Testing PTG for being able to include all possible types
+pegRNA;CTCGTGACCACCCTGACCCAGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCACTGCACGCAGTGGGTCAGGGTGGTCA|gRNA;AGAAGTCGTGCTGCTTCATG|smRNA;AGGCTTAGCTAGGCCTATTACGCTA
+
+>Testing CA for being able to include three different crRNAs
+crRNA;AAGTAGGCTTACGGTATCGT|crRNA;CGGCTAGGAAATTAGCCGAA|crRNA;GGCTTAAATCGCCTACCTTT

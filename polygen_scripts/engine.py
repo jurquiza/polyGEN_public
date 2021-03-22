@@ -192,7 +192,10 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     :return: A tuple of sequences indicating the linker between two adjacent parts. The sequence spans from the start of the respective variable sequence to the end of the determined 4 bp linker. 
     :rtype: tuple
     '''
-
+    
+    for p in parts_list:
+        p.sequence = p.sequence.lower()
+        
     # Write all variable sequences in same order in a new list
     oh_list = []
     if poltype_opt=='ptg':
@@ -230,8 +233,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                     
         # Find possible overhang combinations
         if poltype_opt=='ptg':
-            for s in free_overhangsets:
-                golden_gate_overhangs=s
+            for golden_gate_overhangs in free_overhangsets:
                 seq_matches = []
                 for x in range(len(parts_list)-1):
                     seq_matches.append([])
@@ -296,9 +298,9 @@ def scarless_gg(parts_list, primer_tm_range=[55,65], max_annealing_len=30, bb_ov
     '''
     Uses a list of desired parts and additional arguments to compute a corresponsing PTG. Returns a list of newly computed parts and their primers which can be used to generate the PTG.
     
-    :param parts_list: An array of objects of class part, desired to included in a PTG
+    :param parts_list: An array of objects of class part, to be included in a PTG
     :type parts_list: list
-    :param primer_tm_range: An array of integers of length 2. Temperature range to aim for during primer optimization, defaults to [52,73]
+    :param primer_tm_range: An array of integers of length 2. Temperature range to aim for during primer optimization, defaults to [55,65]
     :type primer_tm_range: list, optional
     :param max_annealing_len: The maximal annealing length of the static part of the primer, defaults to 30
     :type max_annealing_len: int, optional
@@ -326,6 +328,7 @@ def scarless_gg(parts_list, primer_tm_range=[55,65], max_annealing_len=30, bb_ov
     new_parts_list = []
     
     mmry = 13
+    polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0])
     for part in parts_list:
         part.sequence = part.sequence.lower()
         polycistron.sequence += part.sequence
@@ -343,7 +346,7 @@ def scarless_gg(parts_list, primer_tm_range=[55,65], max_annealing_len=30, bb_ov
         if part.type == 'crRNA':
             polycistron.features.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(DR)+len(DR), mmry+len(part.sequence), strand=1), type='spacer'))
         mmry += len(part.sequence)
-
+    polycistron.sequence += bb_overlaps[1] + enzms[enzm][1]
 
     # Iterate through overhang sets with increasing size until fitting one is found
     gg_opt = None
@@ -677,42 +680,53 @@ def pegbldr(sequence, edits, mode='PE2'):
         
         inds = [int(i) for i in str(edt[0]).split(',')]
         changes = str(edt[1]).upper().split(',')
+        if edt[2] == 'del':
+            changes = [str(int(chng)+1) for chng in changes] # deletion stretches should include the ending index for intuitive usability
+        print('inds: ' + str(inds))
+        print('changes1: ' + str(changes))
 
         
                 ## Define pegRNA for editing
         
+        allInd = inds + [int(chng) for chng in changes if edt[2] == 'del']
+        maxInd = max(allInd)
+        minInd = min(allInd)
+        
         # Find all PAM motifs in forward and reverse strand in respective possible regions
-        pegPAMrgn_forw = seq[:inds[0]+6]                         # Define the region where PAM could possibly lie in forw strand
+        pegPAMrgn_forw = seq[:minInd+6]                       # Define the region where PAM could possibly lie in forw strand
         pegPAMs_forw = re.finditer(r'(?=(.GG))', pegPAMrgn_forw) # Find all PAMs in region
-        pegPAMrgn_rev = rev_comp[:len(seq)-inds[-1]+6]
+        pegPAMrgn_rev = rev_comp[:len(seq)-1-maxInd+6]
+        print(pegPAMrgn_rev)
         pegPAMs_rev = re.finditer(r'(?=(.GG))', pegPAMrgn_rev)
         pegPAMs_forw = list(pegPAMs_forw)
         pegPAMs_rev = list(pegPAMs_rev)
         pegPAMs_forw = [i.start() for i in pegPAMs_forw]
         pegPAMs_rev = [i.start() for i in pegPAMs_rev]
+        print('forward PAMs: ' + str(pegPAMs_forw))
+        print('reverse PAMs: ' + str(pegPAMs_rev))
         
         # Check if usable PAMs are present
         if pegPAMs_forw == pegPAMs_rev == []:
             raise InvalidUsage("There are no usable PAM motifs around the edit", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
         
         # Check if there are PAMs in only one strand
-        elif pegPAMs_forw == []:
-            pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
-            pegPAM = pegPAM_rev
-            pegPAM_strand = 'r'
-            seq = rev_comp[:]
-            rev_comp = sequence[:]
-            inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
-            changes = [complement(i) for i in changes]
-        elif pegPAMs_rev == []:
-            pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
-            pegPAM = pegPAM_forw
-            pegPAM_strand = 'f'
+        #elif pegPAMs_forw == []:
+        #    pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
+        #    pegPAM = pegPAM_rev
+        #    pegPAM_strand = 'r'
+        #    seq = rev_comp[:]
+        #    rev_comp = sequence[:]
+        #    inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
+        #    changes = [complement(i) for i in changes]
+        #elif pegPAMs_rev == []:
+        #    pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
+        #    pegPAM = pegPAM_forw
+        #    pegPAM_strand = 'f'
         
-        # If there are PAMs in both strands, choose the one closest to edit
+        # If there are PAMs in both strands, choose the one closest to edit. inf is used to make sure the list is not empty but will never be chosen.
         else:
-            forw_min = min([abs(i-1-inds[0]) for i in pegPAMs_forw])
-            rev_min = min([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])
+            forw_min = min([abs(i-1-inds[0]) for i in pegPAMs_forw] + [np.inf])
+            rev_min = min([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev] + [np.inf])
             pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
             pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
             if forw_min <= rev_min: # Of the closest PAM of each strand, which is closest to mutation? -1 because len(x) == ind(x[-1])+1
@@ -723,9 +737,19 @@ def pegbldr(sequence, edits, mode='PE2'):
                 pegPAM_strand = 'r'
                 seq = rev_comp[:]
                 rev_comp = sequence[:]
-                inds = [len(seq)-i-1 for i in inds]              # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
-                changes = [complement(i) for i in changes]
-        
+                if edt[2] == 'mut':
+                    inds = [len(seq)-i-1 for i in inds]              # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
+                    changes = [complement(i) for i in changes]
+                elif edt[2] == 'ins':
+                    inds = [len(seq)-i for i in inds]
+                    changes = [complement(i) for i in changes]
+                else:
+                    changes = [int(chng) for chng in changes] # Change type of changes to int
+                    changes_plc = changes[:] # create placeholder
+                    changes = [len(seq)-i-1 for i in inds] # switch changes and inds
+                    inds = [len(seq)-i-1 for i in changes_plc]
+                    
+                        
         if inds[-1]-pegPAM > 30:
                 warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
 
@@ -739,7 +763,7 @@ def pegbldr(sequence, edits, mode='PE2'):
         # Calculate RT templates depending on type of edit
         if edt[2] == 'mut':                                      # Check if edit is point mutation
             
-            pre_RT_len = max([13, inds[-1]-(pegPAM-3)])          # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
+            pre_RT_len = max([13, max(inds)-(pegPAM-3)])          # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start() # From default length find next D
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]      # Retrieve RT-template
             RT_templ = [i for i in RT_templ]
@@ -749,28 +773,32 @@ def pegbldr(sequence, edits, mode='PE2'):
                 
         elif edt[2] == 'ins':
             
-            pre_RT_len = max([13, inds[-1]-(pegPAM-3)+6])        # template should have additional length 5' of insert to ensure binding
+            pre_RT_len = max([13, max(inds)-(pegPAM-3)+6])        # template should have additional length 5' of insert to ensure binding
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start()
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]
             RT_templ = [i for i in RT_templ]
-            
             for c_pm,pm in enumerate(inds):
                 RT_templ = RT_templ[:int(pm)-(pegPAM-3)] + [l for l in changes[c_pm]] + RT_templ[int(pm)-(pegPAM-3):]
                 
         elif edt[2] == 'del':
             
+            changes = [int(chng) for chng in changes]
             len_deltns = 0
             for c_pm,pm in enumerate(inds):
-                len_deltns += int(changes[c_pm])-pm
-            pre_RT_len = max([13, int(changes[-1])-(pegPAM-3)+6+len_deltns])
+                len_deltns += changes[c_pm]-pm
+            pre_RT_len = max([13, max(changes)-(pegPAM-3)+6+len_deltns])
+            print('inds: ' + str(inds))
+            print('changes: ' + str(changes))
+            print('pegPAM: ' + str(pegPAM))
+            print('pre_RT_len: ' + str(pre_RT_len))
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start()
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]
             RT_templ = [i for i in RT_templ]
             
             mmry = 0
             for c_pm,pm in enumerate(inds):
-                del RT_templ[pm-(pegPAM-3)-mmry:int(changes[c_pm])-(pegPAM-3)-mmry]
-                mmry += int(changes[c_pm])-pm
+                del RT_templ[pm-(pegPAM-3)-mmry:changes[c_pm]-(pegPAM-3)-mmry]
+                mmry += changes[c_pm]-pm
                 
         RT_templ = ''.join(RT_templ)
         
@@ -779,35 +807,34 @@ def pegbldr(sequence, edits, mode='PE2'):
         pegRNA = pegspacer + scaffld.upper() + RT_templ + PBS
         
         out.append(['pegRNA'+str(c), 'pegRNA', pegRNA, pegPAM_strand])
-        
+
         ## Define gRNA for PE3
         if mode == 'PE3':
             
-            old = []
-            seq = [i for i in seq]
+            nuseq = [i for i in seq]
+            mmry = 0
 
-            for i in range(len(inds)):
-                old.append(seq[inds[i]])
-                seq[inds[i]] = changes[i]
-            seq = ''.join(seq)
+            for c2,ind in enumerate(inds):
+                if edt[2] == 'mut':
+                    nuseq[ind] = changes[c2]
+                elif edt[2] == 'ins':
+                    nuseq = nuseq[:ind] + [b for b in changes[c2]] + nuseq[ind:]
+                elif edt[2] == 'del':
+                    del nuseq[ind:changes[c2]]
+            nuseq = ''.join(nuseq)
             
-            gPAMrgn = reverse_complement(seq[pegPAM:])     # gRNA must bind to other strand somewhere after pegPAM
+            gPAMrgn = reverse_complement(nuseq[pegPAM-3:])     # gRNA must bind to other strand somewhere downstream of pegPAM
             gPAMs = re.finditer(r'(?=(.GG))', gPAMrgn)     # find all PAMs in that region
             gPAMs = np.array([i.start() for i in gPAMs])
-            gPAM = gPAMs[abs(np.array(gPAMs)-(len(gPAMrgn)-44)).argmin()] # Find PAM closest to 47 nt upstream of pegPAM nick
-                                                                          # (the gRNA nick should be 50 nt upstream of pegPAM nick)
+            gPAM = gPAMs[abs(np.array(gPAMs)-(len(gPAMrgn)-44)).argmin()] # Find PAM closest to 47 nt downstream of pegPAM nick
+                                                                          # (the gRNA nick should be 50 nt downstream of pegPAM nick)
 
             gspacer = gPAMrgn[gPAM-20:gPAM]                # Define spacer
 
             gRNA = gspacer
 
             out.append(['gRNA'+str(c), 'gRNA', gRNA, pegPAM_strand])
-
-            seq = [i for i in seq]
-            for i in range(len(inds)):
-                seq[inds[i]] = old[i]
-            seq = ''.join(seq)
-    
+    print(out)
     return out
 
 
