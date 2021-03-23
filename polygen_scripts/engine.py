@@ -537,98 +537,40 @@ def scarless_gg(parts_list, primer_tm_range=[55,65], max_annealing_len=30, bb_ov
     polycistron.parts = parts_list
 
     
-    #Optimize primer Tm
-    for part in polycistron.parts:
-        score_forw = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_forward]
-        score_rev = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_reverse]
-        breakit=False
-            
-        # If both Tms are already below the range, find the nearest Gs
-        if mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0]:
-            for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                if sum(score_forw[i-5:i]) in [1,2]:
-                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_forward = part.primer_forward[:i]
-            for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                if sum(score_rev[j-5:j]) in [1,2]:
-                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_reverse = part.primer_reverse[:j]
-                
-        # If one Tm is below the range, lower the other to make them most similar and find nearest Gs
-        elif mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-            for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                if sum(score_forw[i-5:i]) in [1,2]:
-                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_forward = part.primer_forward[:i]
-            for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                if abs(part.primer_forward_tm-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and sum(score_rev[j-5:j]) in [1,2]:
-                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_reverse = part.primer_reverse[:j]
-                    breakit=True
-            if not breakit:
-                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-        elif mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-            for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                if sum(score_rev[j-5:j]) in [1,2]:
-                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_reverse = part.primer_reverse[:j]
-            for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                if abs(part.primer_reverse_tm-mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and sum(score_forw[j-5:i]) in [1,2]:
-                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_forward = part.primer_forward[:i]
-                    breakit=True
-            if not breakit:
-                part.primer_forward_tm = mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-            
-            # If both Tms are within or above the range, lower them into the range and make them most similar and find nearest Gs
-        else:
-            breakit=False
-            # Do all of the above
-            for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                    if abs(mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50))<=5 and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                        part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_forward = part.primer_forward[:i]
-                        part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_reverse = part.primer_reverse[:j]
-                        breakit=True
-                    if breakit:
-                        break
-                if breakit:
-                    break
-                # Do range and Gs        
-            if not breakit:
-                for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                    for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                        if mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                            part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                            part.primer_forward = part.primer_forward[:i]
-                            part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                            part.primer_reverse = part.primer_reverse[:j]
-                            breakit=True
-                        if breakit:
-                            break
-                    if breakit:
-                        break
-                # Do only Gs nearest to range
-            if not breakit:
-                for i in range(len(part.primer_forward)-1-(max_annealing_len-18), len(part.primer_forward)):
-                    for j in range(len(part.primer_reverse)-1-(max_annealing_len-18), len(part.primer_reverse)):
-                        if sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                            part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                            part.primer_forward = part.primer_forward[:i]
-                            part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                            part.primer_reverse = part.primer_reverse[:j]
-                            breakit=True
-                        if breakit:
-                            break
-                    if breakit:
-                        break
-                    
-            if not breakit:
-                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+    ## Optimise primer Tm    
+    for c,prmr in enumerate(flattn([[part.primer_forward, part.primer_reverse] for part in polycistron.parts])):
     
+        prmrRest = prmr[:-max_annealing_len]
+        prmrRestLen = len(prmrRest)
+    
+        scr = [1 if i in ['C','G','g','c'] else 0 for i in prmr] # Extract score from sequence for finding GC-clamps
+        optns = [prmr[:i] for i in range(len(prmr),len(prmr)-(max_annealing_len-18+1), -1) if sum(scr[i-5:i]) in [1,2]] # Find all GC-clamps
+        checkStatic = [optn for optn in optns if primer_tm_range[0] <= mt.Tm_NN(optn[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1]] # Find all GC-clamp options with static Tm inside provided range
+        checkWhole = [optn for optn in checkStatic if primer_tm_range[0] <= mt.Tm_NN(optn, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1]] # Find all GC-clamp options with whole Tm inside provided range
+        
+        if checkWhole: # If there are GC-clamp options with whole Tm, use the shortest one to cut costs
+            fin = checkWhole[-1]
+        elif checkStatic: # If there are no GC-clamps with whole Tm but such with static Tm, use the shortest, to (1) cut costs and (2) get the Tm of the whole primer as close as possible to range.
+            fin = checkStatic[-1]
+        elif optns and mt.Tm_NN(optns[-1][prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) > primer_tm_range[1]: # If all GC-clamps are above the range, use lowest one
+            fin = optns[-1]
+        elif optns and mt.Tm_NN(optns[0][prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0]: # If all GC-clamps are below the range, use highest one
+            fin = optns[0]
+        else: # If there are no GC-clamps, find the primer with static Tm closest to bottom of range for cutting costs
+            countUp = prmrRestLen+18
+            lastResort = prmr[prmrRestLen:countUp]
+            while mt.Tm_NN(lastResort, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and prmrRestLen + len(lastResort) < len(prmr):
+                countUp += 1
+                lastResort = prmr[prmrRestLen:countUp]
+            fin = prmr[:countUp]
+        
+        if c%2 == 0: # Assign the found primer and corresponding static Tm to the respective part
+            polycistron.parts[int(np.floor(c/2))].primer_forward = fin
+            polycistron.parts[int(np.floor(c/2))].primer_forward_tm = mt.Tm_NN(fin[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+        else:
+            polycistron.parts[int(np.floor(c/2))].primer_reverse = fin
+            polycistron.parts[int(np.floor(c/2))].primer_reverse_tm = mt.Tm_NN(fin[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+        
     return polycistron,msg
 
 
@@ -682,8 +624,6 @@ def pegbldr(sequence, edits, mode='PE2'):
         changes = str(edt[1]).upper().split(',')
         if edt[2] == 'del':
             changes = [str(int(chng)+1) for chng in changes] # deletion stretches should include the ending index for intuitive usability
-        print('inds: ' + str(inds))
-        print('changes1: ' + str(changes))
 
         
                 ## Define pegRNA for editing
@@ -696,32 +636,29 @@ def pegbldr(sequence, edits, mode='PE2'):
         pegPAMrgn_forw = seq[:minInd+6]                       # Define the region where PAM could possibly lie in forw strand
         pegPAMs_forw = re.finditer(r'(?=(.GG))', pegPAMrgn_forw) # Find all PAMs in region
         pegPAMrgn_rev = rev_comp[:len(seq)-1-maxInd+6]
-        print(pegPAMrgn_rev)
         pegPAMs_rev = re.finditer(r'(?=(.GG))', pegPAMrgn_rev)
         pegPAMs_forw = list(pegPAMs_forw)
         pegPAMs_rev = list(pegPAMs_rev)
         pegPAMs_forw = [i.start() for i in pegPAMs_forw]
         pegPAMs_rev = [i.start() for i in pegPAMs_rev]
-        print('forward PAMs: ' + str(pegPAMs_forw))
-        print('reverse PAMs: ' + str(pegPAMs_rev))
         
         # Check if usable PAMs are present
         if pegPAMs_forw == pegPAMs_rev == []:
             raise InvalidUsage("There are no usable PAM motifs around the edit", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
         
         # Check if there are PAMs in only one strand
-        #elif pegPAMs_forw == []:
-        #    pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
-        #    pegPAM = pegPAM_rev
-        #    pegPAM_strand = 'r'
-        #    seq = rev_comp[:]
-        #    rev_comp = sequence[:]
-        #    inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
-        #    changes = [complement(i) for i in changes]
-        #elif pegPAMs_rev == []:
-        #    pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
-        #    pegPAM = pegPAM_forw
-        #    pegPAM_strand = 'f'
+        elif pegPAMs_forw == []:
+            pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-max(inds))) for i in pegPAMs_rev])]
+            pegPAM = pegPAM_rev
+            pegPAM_strand = 'r'
+            seq = rev_comp[:]
+            rev_comp = sequence[:]
+            inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
+            changes = [complement(i) for i in changes]
+        elif pegPAMs_rev == []:
+            pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-min(inds)) for i in pegPAMs_forw])]
+            pegPAM = pegPAM_forw
+            pegPAM_strand = 'f'
         
         # If there are PAMs in both strands, choose the one closest to edit. inf is used to make sure the list is not empty but will never be chosen.
         else:
@@ -787,10 +724,6 @@ def pegbldr(sequence, edits, mode='PE2'):
             for c_pm,pm in enumerate(inds):
                 len_deltns += changes[c_pm]-pm
             pre_RT_len = max([13, max(changes)-(pegPAM-3)+6+len_deltns])
-            print('inds: ' + str(inds))
-            print('changes: ' + str(changes))
-            print('pegPAM: ' + str(pegPAM))
-            print('pre_RT_len: ' + str(pre_RT_len))
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start()
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]
             RT_templ = [i for i in RT_templ]
@@ -834,7 +767,7 @@ def pegbldr(sequence, edits, mode='PE2'):
             gRNA = gspacer
 
             out.append(['gRNA'+str(c), 'gRNA', gRNA, pegPAM_strand])
-    print(out)
+            
     return out
 
 
