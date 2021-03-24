@@ -31,9 +31,9 @@ def sequence():
     
     if request.method == "POST":
         if request.form['submit_button'] == 'submit':
-            runall_args = {}
-            runall_args['poltype_run'] = request.form["poltype_input"]
-            runall_args['enzm'] = request.form['enzm_input']
+            args = {}
+            args['poltype'] = request.form["poltype_input"]
+            args['enzm'] = request.form['enzm_input']
             session['enzm_site'] = enzms[request.form['enzm_input']]
             session['PTG_name'] = request.form["PTG_name"]
             session['oligo_prefix'] = request.form["oligo_prefix"]
@@ -43,14 +43,14 @@ def sequence():
             session['add_ovrhng'] = request.form["add_ovrhng"]
             session['max_ann_len'] = request.form['maxAnnLen']
         
-            runall_args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
-            runall_args['bb_overlaps'] = ['tgcc', 'gttt']
+            args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
+            args['bb_overlaps'] = ['tgcc', 'gttt']
             if session['bb_ovrhng']:
-                runall_args['bb_overlaps'] = session["bb_ovrhng"].split(';')
+                args['bb_overlaps'] = session["bb_ovrhng"].split(';')
             if session['add_ovrhng']:
-                runall_args['additional_overhangs'] = session["add_ovrhng"].split(';')
+                args['additional_overhangs'] = session["add_ovrhng"].split(';')
             if session['max_ann_len']:
-                runall_args['max_ann_len'] = int(session['max_ann_len'])
+                args['max_ann_len'] = int(session['max_ann_len'])
             
             if '/' in session['PTG_name']:
                 raise InvalidUsage("Polycistron name may not contain a '/'", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_name'})
@@ -61,16 +61,24 @@ def sequence():
             
             PTG_input = session['PTG_transfer'].split('|')
             PTG_structure = []
-            PTG_index=1
             for element in PTG_input:
-                element_list=[]
-                element_list.append([session['PTG_name'] if session['PTG_name'] else 'PTG'][0]+'_'+str(PTG_index))
-                PTG_index+=1
-                for e in element.split(';'):
-                    element_list.append(e)
-                PTG_structure.append(element_list)  
+                e = element.split(';')
+                if len(e) != 2:
+                    raise InvalidUsage("Invalid input syntax", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+                elif e[0] not in ['gRNA', 'pegRNA', 'smRNA', 'crRNA']:
+                    raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+                elif re.search(r'^[ACGTacgt]*$', e[1]) is None:
+                    raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+                else:
+                    PTG_structure.append(e)
+                
+            for lnk in session['bb_ovrhng']+session['add_ovrhng']:
+                if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
+                    raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
+            
+            PTG = PTGbldr(session['PTG_name'], PTG_structure, args['poltype'])
 
-            session['plcstrn'],session['msg'] = runall(PTG_structure, **runall_args)
+            session['plcstrn'],session['msg'] = scarless_gg(PTG, **args)
         
             if not session['PTG_name']:
                 session['PTG_name'] = request.form['poltype_input'].upper()
@@ -80,12 +88,12 @@ def sequence():
                 session['oligo_index'] = '0'
             
             if request.form.get('borderPrimers'):
-                if runall_args['poltype_run'] == 'ptg':
-                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(runall_args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
-                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(runall_args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
-                if runall_args['poltype_run'] == 'ca':
-                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(runall_args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
-                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(runall_args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
+                if args['poltype_run'] == 'ptg':
+                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
+                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
+                if args['poltype_run'] == 'ca':
+                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
+                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
 
             return render_template("primer_list.html", session=session)
             

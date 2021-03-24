@@ -7,18 +7,18 @@ class TestPTGbldr(unittest.TestCase):
         '''
         Test if a PTG is correctly designed for all input types
         '''
-        insrts = [['gRNA0', 'gRNA', 'AAGGCCTTAAGGCCTTAAGG'], ['pegRNA0', 'pegRNA', 'CACCGGGGTGGTGCCCATCCGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCCAGCTCGACGTACCAGGATGGGCACCACCCC'], ['smRNA0', 'smRNA', 'ACGTACGTACGTACGTACGTACGTACGT']]
-        partsList = PTGbldr(insrts, poltype_bldr='ptg')
+        insrts = [['gRNA', 'AAGGCCTTAAGGCCTTAAGG'], ['pegRNA', 'CACCGGGGTGGTGCCCATCCGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCCAGCTCGACGTACCAGGATGGGCACCACCCC'], ['smRNA', 'ACGTACGTACGTACGTACGTACGTACGT']]
+        partsList = PTGbldr('test0', insrts, poltype='ptg')
         result = [vars(part) for part in partsList]
-        expected = [{'name': 'tRNA', 'sequence': 'aacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'tRNA'}, {'name': 'gRNA0', 'sequence': 'AAGGCCTTAAGGCCTTAAGGgttttagagctagaaatagcaagttaaaataaggctagtccgttatcaacttgaaaaagtggcaccgagtcggtgcaacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'gRNA'}, {'name': 'pegRNA0', 'sequence': 'CACCGGGGTGGTGCCCATCCGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCCAGCTCGACGTACCAGGATGGGCACCACCCC', 'type': 'pegRNA'}, {'name': 'tRNA', 'sequence': 'aacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'tRNA'}, {'name': 'smRNA0', 'sequence': 'ACGTACGTACGTACGTACGTACGTACGTaacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'smRNA'}]
+        expected = [{'name': 'test0_0', 'sequence': 'aacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'tRNA'}, {'name': 'test0_1', 'sequence': 'AAGGCCTTAAGGCCTTAAGGgttttagagctagaaatagcaagttaaaataaggctagtccgttatcaacttgaaaaagtggcaccgagtcggtgcaacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'gRNA'}, {'name': 'test0_2', 'sequence': 'CACCGGGGTGGTGCCCATCCGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCCAGCTCGACGTACCAGGATGGGCACCACCCC', 'type': 'pegRNA'}, {'name': 'test0_3', 'sequence': 'aacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'tRNA'}, {'name': 'test0_4', 'sequence': 'ACGTACGTACGTACGTACGTACGTACGTaacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca', 'type': 'smRNA'}]
         self.assertEqual(result, expected)
     
     def test_PTGbldr_CA(self):
         '''
         Test if a CA is correctly designed
         '''
-        insrts = [['crRNA0', 'crRNA', 'ACGTACGTACGTACGTACGT'], ['crRNA1', 'crRNA', 'AAAACCCCGGGGTTTTAAAA'], ['crRNA2', 'crRNA', 'AACCGGTTAACCGGTTAACC']]
-        partsList = PTGbldr(insrts, poltype_bldr='ca')
+        insrts = [['crRNA', 'ACGTACGTACGTACGTACGT'], ['crRNA', 'AAAACCCCGGGGTTTTAAAA'], ['crRNA', 'AACCGGTTAACCGGTTAACC']]
+        partsList = PTGbldr('test1', insrts, poltype='ca')
         result = [vars(part) for part in partsList]
-        expected = [{'name': 'crRNA0', 'sequence': 'aatttctactgttgtagatACGTACGTACGTACGTACGT', 'type': 'crRNA'}, {'name': 'crRNA1', 'sequence': 'aatttctactgttgtagatAAAACCCCGGGGTTTTAAAA', 'type': 'crRNA'}, {'name': 'crRNA2', 'sequence': 'aatttctactgttgtagatAACCGGTTAACCGGTTAACC', 'type': 'crRNA'}, {'name': 'DR', 'sequence': 'aatttctactgttgtagat', 'type': 'DR'}]
+        expected = [{'name': 'test1_0', 'sequence': 'aatttctactgttgtagatACGTACGTACGTACGTACGT', 'type': 'crRNA'}, {'name': 'test1_1', 'sequence': 'aatttctactgttgtagatAAAACCCCGGGGTTTTAAAA', 'type': 'crRNA'}, {'name': 'test1_2', 'sequence': 'aatttctactgttgtagatAACCGGTTAACCGGTTAACC', 'type': 'crRNA'}, {'name': 'test1_3', 'sequence': 'aatttctactgttgtagat', 'type': 'DR'}]
         self.assertEqual(result, expected)
