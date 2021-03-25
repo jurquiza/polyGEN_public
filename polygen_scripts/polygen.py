@@ -141,6 +141,7 @@ def serve_primers():
     positions = len(session['oligo_index'])
     collapsed_index = int(session['oligo_index'])
     oligo_ids = []
+    
     for primer in flattn([[i.primer_forward, i.primer_reverse] for i in session['plcstrn'].parts]):
         oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0'+str(positions)))
         csv += session['oligo_prefix']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
@@ -154,16 +155,17 @@ def serve_primers():
     sr = SeqRecord(seq=Seq(session['plcstrn'].sequence, alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
     for ftr in session['plcstrn'].features:
         sr.features.append(ftr)
+    gb_json = polyToJson(session['plcstrn'])
     
     in_memory = BytesIO()
     zf = ZipFile(in_memory, mode='w')
     zf.writestr(session['PTG_name']+"_oligos.csv", csv)
     zf.writestr(session['PTG_name']+".gb", sr.format('genbank'))
+    zf.writestr(session['PTG_name']+'_raw.json', json.dumps(gb_json))
     with open('protocol.txt') as f:
         zf.writestr('protocol.txt', f.read())
     zf.close()
     in_memory.seek(0)
-    
     outpt = in_memory.read()
     
     return Response(

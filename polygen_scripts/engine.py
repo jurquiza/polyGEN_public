@@ -7,6 +7,7 @@ import re
 import pandas as pd
 import warnings
 import json
+import copy
 from Bio.SeqUtils import MeltingTemp as mt
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -91,21 +92,7 @@ class Polycistron:
     
     
     def __init__(self):
-        '''inits polycistron'''
-    
-    def to_json(self):
-        '''transforms data to json format'''
-        
-        ftrs = [vars(feat) for feat in self.features]
-        for feat in ftrs:
-            feat['location'] = vars(feat['location'])
-        
-        return {
-            "sequence": self.sequence,
-            "parts": [p.to_json() for p in self.parts],
-            "features": ftrs,
-            "warning": self.warning
-        }
+        '''inits Polycistron'''
     
     sequence = ''
     parts = []
@@ -114,6 +101,22 @@ class Polycistron:
 
 
 # Define functions to ease the main computation
+def polyToJson(poly):
+    '''transforms data to json format''' 
+    
+    p = copy.deepcopy(poly)
+    
+    ftrs = [vars(feat) for feat in p.features]
+    for feat in ftrs:
+        feat['location'] = vars(feat['location'])
+        
+    return {
+        "sequence": p.sequence,
+        "parts": [p.to_json() for p in p.parts],
+        "features": ftrs,
+        "warning": p.warning
+    }
+
 def reverse_complement(sequence):
     '''
     Finds the reverse complement of a provided sequence
@@ -600,10 +603,6 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
         else:
             polycistron.parts[int(np.floor(c/2))].primer_reverse = fin
             polycistron.parts[int(np.floor(c/2))].primer_reverse_tm = mt.Tm_NN(fin[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-    
-    #results = {'polycistron': polycistron.to_json(), 'msg': msg}
-    #with open ('test1_gRNAs.json', 'w') as f:
-    #    json.dump(results, f)
 
     return polycistron,msg
 
