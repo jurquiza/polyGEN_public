@@ -45,6 +45,7 @@ def sequence():
         
             args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
             args['bb_overlaps'] = ['tgcc', 'gttt']
+            args['additional_overhangs'] = []
             if session['bb_ovrhng']:
                 args['bb_overlaps'] = session["bb_ovrhng"].split(';')
             if session['add_ovrhng']:
@@ -71,13 +72,16 @@ def sequence():
                     raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
                 else:
                     PTG_structure.append(e)
-                
-            for lnk in session['bb_ovrhng']+session['add_ovrhng']:
+            
+            for lnk in args['bb_overlaps']+args['additional_overhangs']:
+                print(lnk)
                 if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
                     raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
             
             PTG = PTGbldr(session['PTG_name'], PTG_structure, args['poltype'])
-
+            
+            print([prt.to_json() for prt in PTG])
+            
             session['plcstrn'],session['msg'] = scarless_gg(PTG, **args)
         
             if not session['PTG_name']:
@@ -155,7 +159,9 @@ def serve_primers():
     sr = SeqRecord(seq=Seq(session['plcstrn'].sequence, alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
     for ftr in session['plcstrn'].features:
         sr.features.append(ftr)
-    gb_json = polyToJson(session['plcstrn'])
+    gb_json = {}
+    gb_json['polycistron'] = polyToJson(session['plcstrn'])
+    gb_json['msg'] = session['msg']
     
     in_memory = BytesIO()
     zf = ZipFile(in_memory, mode='w')

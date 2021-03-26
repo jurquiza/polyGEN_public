@@ -1,0 +1,20 @@
+List of oligos:
+oligo_ID,sequence
+oTest8_0,gaggtctcgGGCAaacaaagcaccagtggtctagt
+oTest8_1,gaggtctcgTGAActtgttgcacctagctgcaccagccgggaatcg
+oTest8_2,gaggtctcgTTCAataacaaagcaccagtggtctagt
+oTest8_3,gaggtctcgCGGCgcgggtcttgtagttgtgcaccagccgggaatcg
+oTest8_4,gaggtctcgGCCGgttttagagctagaaatagcaagttaa
+oTest8_5,gaggtctcgAGGAgggcgacagcaccgactcggtgccactt
+oTest8_6,gaggtctcgTCCTtcacctcggcgcgggtcttgtaaacaaagcaccagtggtctagt
+oTest8_7,gaggtctcgCATCgtgcaccagccgggaatcg
+oTest8_8,gaggtctcgGATGcccttcagctcgatggttttagagctagaaatagcaagttaa
+oTest8_9,gaggtctcgAAACtgcaccagccgggaatcg
+
+Table of fragments:
+fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev
+test8_addedLinkers_f0,tRNA,oTest8_0,55.9,oTest8_1,59.5
+test8_addedLinkers_f1,smRNA,oTest8_2,55.9,oTest8_3,59.5
+test8_addedLinkers_f2,pegRNA,oTest8_4,52.0,oTest8_5,61.8
+test8_addedLinkers_f3,tRNA,oTest8_6,55.9,oTest8_7,59.5
+test8_addedLinkers_f4,gRNA,oTest8_8,52.0,oTest8_9,59.5

@@ -82,6 +82,13 @@ class Part:
             "primer_forward_tm": self.primer_forward_tm,
             "primer_reverse_tm": self.primer_reverse_tm
         }
+    
+    @classmethod
+    def from_json(cls, json_data):
+        return cls(json_data['name'],
+                   json_data['type'],
+                   json_data['sequence']
+                   )
         
     primer_forward = ""
     primer_reverse = ""
@@ -360,7 +367,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     # Go through parts and write all known annotations into list
     new_parts_list = []
     
-    mmry = 13
+    mmry = len(enzms[enzm][0])+4
     polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0])
     for part in parts_list:
         part.sequence = part.sequence.lower()
@@ -559,13 +566,14 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
                 parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + DR
                 parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + parts_list[i+1].sequence
                 parts_list[i].sequence = parts_list[i].sequence[:parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
-        
-        polycistron.parts = parts_list
-        return polycistron,msg # If CA, skip the primer optimization step, since the DR is very short
                             
     for o in parts_list:
         o.primer_forward = o.primer_forward[:len(enzms[enzm][0])].lower() + o.primer_forward[len(enzms[enzm][0]):len(enzms[enzm][0])+4].upper() + o.primer_forward[len(enzms[enzm][0])+4:].lower()
         o.primer_reverse = o.primer_reverse[:len(enzms[enzm][1])].lower() + o.primer_reverse[len(enzms[enzm][1]):len(enzms[enzm][1])+4].upper() + o.primer_reverse[len(enzms[enzm][1])+4:].lower()
+    
+    if poltype == 'ca':
+        polycistron.parts = parts_list
+        return polycistron,msg # If CA, skip the primer optimization step, since the DR is very short
 
     polycistron.parts = parts_list
 
@@ -603,7 +611,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
         else:
             polycistron.parts[int(np.floor(c/2))].primer_reverse = fin
             polycistron.parts[int(np.floor(c/2))].primer_reverse_tm = mt.Tm_NN(fin[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-
+            
     return polycistron,msg
 
 
