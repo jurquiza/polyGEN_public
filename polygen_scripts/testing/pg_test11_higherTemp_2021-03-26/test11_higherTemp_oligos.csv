@@ -1,0 +1,20 @@
+List of oligos:
+oligo_ID,sequence
+oTest11_0,gaggtctcgGGCAaacaaagcaccagtggtctagtggtagaat
+oTest11_1,gaggtctcgGCACctagctgcaccagccgggaatcgaa
+oTest11_2,gaggtctcgGTGCaacaagttcaataacaaagcaccagtggtctagtggtagaat
+oTest11_3,gaggtctcgCGGCgcgggtcttgtagttgtgcaccagccgggaatcgaa
+oTest11_4,gaggtctcgGCCGgttttagagctagaaatagcaagttaa
+oTest11_5,gaggtctcgCCCGcgccgaggtgaaggagggcgacagcaccgactcggtgccactttttcaag
+oTest11_6,gaggtctcgCGGGtcttgtaaacaaagcaccagtggtctagtggtagaat
+oTest11_7,gaggtctcgATCGtgcaccagccgggaatcgaa
+oTest11_8,gaggtctcgCGATgcccttcagctcgatggttttagagctagaaatagcaagttaa
+oTest11_9,gaggtctcgAAACtgcaccagccgggaatcgaa
+
+Table of fragments:
+fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev
+test11_higherTemp_f0,tRNA,oTest11_0,61.2,oTest11_1,61.0
+test11_higherTemp_f1,smRNA,oTest11_2,61.2,oTest11_3,61.0
+test11_higherTemp_f2,pegRNA,oTest11_4,52.0,oTest11_5,64.3
+test11_higherTemp_f3,tRNA,oTest11_6,61.2,oTest11_7,61.0
+test11_higherTemp_f4,gRNA,oTest11_8,52.0,oTest11_9,61.0

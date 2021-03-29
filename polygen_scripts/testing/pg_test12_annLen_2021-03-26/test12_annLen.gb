@@ -1,0 +1,33 @@
+LOCUS       test12_annLen            581 bp    DNA     linear   UNK 26-MAR-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            14..90
+     smRNA           91..188
+     smRNA           91..111
+     tRNA            112..188
+     pegRNA          189..318
+     spacer          189..208
+     RT_template     285..305
+     PBS             306..318
+     tRNA            319..395
+     gRNA            396..568
+     spacer          396..415
+     tRNA            492..568
+ORIGIN
+        1 gaggtctcgg gcaaacaaag caccagtggt ctagtggtag aatagtaccc tgccacggta
+       61 cagacccggg ttcgattccc ggctggtgca gctaggtgca acaagttcaa taacaaagca
+      121 ccagtggtct agtggtagaa tagtaccctg ccacggtaca gacccgggtt cgattcccgg
+      181 ctggtgcaca actacaagac ccgcgccggt tttagagcta gaaatagcaa gttaaaataa
+      241 ggctagtccg ttatcaactt gaaaaagtgg caccgagtcg gtgctgtcgc cctccttcac
+      301 ctcggcgcgg gtcttgtaaa caaagcacca gtggtctagt ggtagaatag taccctgcca
+      361 cggtacagac ccgggttcga ttcccggctg gtgcacgatg cccttcagct cgatggtttt
+      421 agagctagaa atagcaagtt aaaataaggc tagtccgtta tcaacttgaa aaagtggcac
+      481 cgagtcggtg caacaaagca ccagtggtct agtggtagaa tagtaccctg ccacggtaca
+      541 gacccgggtt cgattcccgg ctggtgcagt ttcgagacct c
+//

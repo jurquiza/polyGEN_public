@@ -1,0 +1,33 @@
+LOCUS       test6_btgzi              599 bp    DNA     linear   UNK 26-MAR-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            23..99
+     smRNA           100..197
+     smRNA           100..120
+     tRNA            121..197
+     pegRNA          198..327
+     spacer          198..217
+     RT_template     294..314
+     PBS             315..327
+     tRNA            328..404
+     gRNA            405..577
+     spacer          405..424
+     tRNA            501..577
+ORIGIN
+        1 ctgcgatgga gtatgttagg caaacaaagc accagtggtc tagtggtaga atagtaccct
+       61 gccacggtac agacccgggt tcgattcccg gctggtgcag ctaggtgcaa caagttcaat
+      121 aacaaagcac cagtggtcta gtggtagaat agtaccctgc cacggtacag acccgggttc
+      181 gattcccggc tggtgcacaa ctacaagacc cgcgccggtt ttagagctag aaatagcaag
+      241 ttaaaataag gctagtccgt tatcaacttg aaaaagtggc accgagtcgg tgctgtcgcc
+      301 ctccttcacc tcggcgcggg tcttgtaaac aaagcaccag tggtctagtg gtagaatagt
+      361 accctgccac ggtacagacc cgggttcgat tcccggctgg tgcacgatgc ccttcagctc
+      421 gatggtttta gagctagaaa tagcaagtta aaataaggct agtccgttat caacttgaaa
+      481 aagtggcacc gagtcggtgc aacaaagcac cagtggtcta gtggtagaat agtaccctgc
+      541 cacggtacag acccgggttc gattcccggc tggtgcagtt ttaacatact ccatcgcag
+//

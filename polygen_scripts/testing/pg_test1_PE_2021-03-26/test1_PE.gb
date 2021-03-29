@@ -1,0 +1,28 @@
+LOCUS       test1_PE                 476 bp    DNA     linear   UNK 26-MAR-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            14..90
+     pegRNA          91..213
+     spacer          91..110
+     RT_template     187..200
+     PBS             201..213
+     tRNA            214..290
+     gRNA            291..463
+     spacer          291..310
+     tRNA            387..463
+ORIGIN
+        1 gaggtctcgg gcaaacaaag caccagtggt ctagtggtag aatagtaccc tgccacggta
+       61 cagacccggg ttcgattccc ggctggtgca ctcgtgacca ccctgaccca gttttagagc
+      121 tagaaatagc aagttaaaat aaggctagtc cgttatcaac ttgaaaaagt ggcaccgagt
+      181 cggtgcactg cacgcagtgg gtcagggtgg tcaaacaaag caccagtggt ctagtggtag
+      241 aatagtaccc tgccacggta cagacccggg ttcgattccc ggctggtgca agaagtcgtg
+      301 ctgcttcatg gttttagagc tagaaatagc aagttaaaat aaggctagtc cgttatcaac
+      361 ttgaaaaagt ggcaccgagt cggtgcaaca aagcaccagt ggtctagtgg tagaatagta
+      421 ccctgccacg gtacagaccc gggttcgatt cccggctggt gcagtttcga gacctc
+//

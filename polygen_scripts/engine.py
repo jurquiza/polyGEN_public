@@ -6,6 +6,8 @@ import itertools
 import re
 import pandas as pd
 import warnings
+import json
+import copy
 from Bio.SeqUtils import MeltingTemp as mt
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -67,16 +69,61 @@ class Part:
         self.name = name
         self.sequence = sequence
         self.type = type
+    
+    def to_json(self):
+        '''transforms data to json format'''
+        
+        return {
+            "name": self.name,
+            "sequence": self.sequence,
+            "type": self.type,
+            "primer_forward": self.primer_forward,
+            "primer_reverse": self.primer_reverse,
+            "primer_forward_tm": self.primer_forward_tm,
+            "primer_reverse_tm": self.primer_reverse_tm
+        }
+    
+    @classmethod
+    def from_json(cls, json_data):
+        return cls(json_data['name'],
+                   json_data['type'],
+                   json_data['sequence']
+                   )
         
     primer_forward = ""
     primer_reverse = ""
-    bridge_with_next_part = ""
-    bridge_with_previous_part = ""
     primer_forward_tm = 0
     primer_reverse_tm = 0
+    
+class Polycistron:
+    
+    
+    def __init__(self):
+        '''inits Polycistron'''
+    
+    sequence = ''
+    parts = []
+    features = []
+    warning = None
 
 
 # Define functions to ease the main computation
+def polyToJson(poly):
+    '''transforms data to json format''' 
+    
+    p = copy.deepcopy(poly)
+    
+    ftrs = [vars(feat) for feat in p.features]
+    for feat in ftrs:
+        feat['location'] = vars(feat['location'])
+        
+    return {
+        "sequence": p.sequence,
+        "parts": [p.to_json() for p in p.parts],
+        "features": ftrs,
+        "warning": p.warning
+    }
+
 def reverse_complement(sequence):
     '''
     Finds the reverse complement of a provided sequence
@@ -183,7 +230,10 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     :return: A tuple of sequences indicating the linker between two adjacent parts. The sequence spans from the start of the respective variable sequence to the end of the determined 4 bp linker. 
     :rtype: tuple
     '''
-
+    
+    for p in parts_list:
+        p.sequence = p.sequence.lower()
+        
     # Write all variable sequences in same order in a new list
     oh_list = []
     if poltype_opt=='ptg':
@@ -221,8 +271,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                     
         # Find possible overhang combinations
         if poltype_opt=='ptg':
-            for s in free_overhangsets:
-                golden_gate_overhangs=s
+            for golden_gate_overhangs in free_overhangsets:
                 seq_matches = []
                 for x in range(len(parts_list)-1):
                     seq_matches.append([])
@@ -283,22 +332,22 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
 
 #Copyright (c) 2019 Scott Weisberg
 # Perform scarless Golden Gate assembly computation with provided parts
-def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_gg='ptg', enzm='bsai'):
+def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype='ptg', enzm='bsai'):
     '''
     Uses a list of desired parts and additional arguments to compute a corresponsing PTG. Returns a list of newly computed parts and their primers which can be used to generate the PTG.
     
-    :param parts_list: An array of objects of class part, desired to included in a PTG
+    :param parts_list: An array of objects of class part, to be included in a PTG
     :type parts_list: list
-    :param primer_tm_range: An array of integers of length 2. Temperature range to aim for during primer optimization, defaults to [52,73]
-    :type primer_tm_range: list, optional
-    :param max_annealing_len: The maximal annealing length of the static part of the primer, defaults to 30
-    :type max_annealing_len: int, optional
+    :param tm_range: An array of integers of length 2. Temperature range to aim for during primer optimization, defaults to [55,65]
+    :type tm_range: list, optional
+    :param max_ann_len: The maximal annealing length of the static part of the primer, defaults to 30
+    :type max_ann_len: int, optional
     :param bb_overlaps: Linkers of the destination plasmid flanking the final PTG, defaults to ['tgcc','gttt']
     :type bb_overlaps: list, optional
     :param additional_overhangs: Additional linkers in the destination plasmid, defaults to []
     :type additional_overhangs: list, optional
-    :param poltype_gg: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
-    :type poltype_gg: str, optional
+    :param poltype: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
+    :type poltype: str, optional
     :param enzm: Type II restriction enzyme to use for the Golden Gate assembly. Defaults to 'bsai'
     :type enzm: str, optional
     
@@ -306,7 +355,10 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     :rtype: list, list, str
     '''
     
-    msg = None
+    polycistron = Polycistron()
+    polycistron.features = [] # must overwrite with empty list because features list would accumulate across runs in same session through append command
+
+    msg=None
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
     enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['agaagacag', 'ctgtcttct']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
@@ -314,26 +366,27 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
     
     # Go through parts and write all known annotations into list
     new_parts_list = []
-    ftrs = []
     
-    mmry = 13
+    mmry = len(enzms[enzm][0])+4
+    polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0])
     for part in parts_list:
         part.sequence = part.sequence.lower()
-        ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.name))
+        polycistron.sequence += part.sequence
+        polycistron.features.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence), strand=1), type=part.type))
         if part.type == 'pegRNA':
-            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
-            ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(scaffld)+len(scaffld), mmry+len(part.sequence)-13, strand=1), type='RT template'))
-            ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-13, mmry+len(part.sequence), strand=1), type='PBS'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(scaffld)+len(scaffld), mmry+len(part.sequence)-13, strand=1), type='RT template'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-13, mmry+len(part.sequence), strand=1), type='PBS'))
         elif part.type == 'gRNA':
-            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
-            ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry, mmry+part.sequence.find(scaffld), strand=1), type='spacer'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
         elif part.type == 'smRNA':
-            ftrs.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence)-len(tRNA), strand=1), type='smRNA'))
-            ftrs.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-len(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry, mmry+len(part.sequence)-len(tRNA), strand=1), type='smRNA'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry+len(part.sequence)-len(tRNA), mmry+len(part.sequence), strand=1), type='tRNA'))
         if part.type == 'crRNA':
-            ftrs.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(DR)+len(DR), mmry+len(part.sequence), strand=1), type='spacer'))
+            polycistron.features.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(DR)+len(DR), mmry+len(part.sequence), strand=1), type='spacer'))
         mmry += len(part.sequence)
-
+    polycistron.sequence += bb_overlaps[1] + enzms[enzm][1]
 
     # Iterate through overhang sets with increasing size until fitting one is found
     gg_opt = None
@@ -358,7 +411,7 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
                 continue
            
         if free_overhangsets:
-            gg_opt = golden_gate_optimization(parts_list, free_overhangsets, poltype_gg)
+            gg_opt = golden_gate_optimization(parts_list, free_overhangsets, poltype)
         if gg_opt is not None:
             breakit = True
         if breakit:
@@ -392,7 +445,7 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
                         continue
 
                 if free_overhangsets:
-                    gg_opt = golden_gate_optimization(parts_list, free_overhangsets, poltype_gg)
+                    gg_opt = golden_gate_optimization(parts_list, free_overhangsets, poltype)
                 if gg_opt is not None:
                     breakit = True
                         
@@ -409,87 +462,87 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
 
 
     #Modify sequences and design primers
-    if poltype_gg=='ptg':
+    if poltype=='ptg':
         for i in range(len(parts_list)):
             
             # If current part is first part, define forward primer with left backbone overlap and reverse primer ordinarily
             if i == 0:
-                parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence[:max_annealing_len]
+                parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence[:max_ann_len]
                 parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence
                 if parts_list[i].type == 'pegRNA':
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76-max_annealing_len:parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + enzms[enzm][1])
-                    parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + parts_list[i+1].sequence[:max_annealing_len]
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76-max_ann_len:parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + parts_list[i+1].sequence[:max_ann_len]
                     parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + parts_list[i+1].sequence
                     parts_list[i].sequence = parts_list[i].sequence[:parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + enzms[enzm][1]
                 elif parts_list[i].type == 'gRNA':
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
                     parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                     if parts_list[i+1].type == 'smRNA':
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 elif parts_list[i].type == 'smRNA':
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
                     parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                     if parts_list[i+1].type == 'smRNA':
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 else: #part is tRNA
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
                     parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                     if parts_list[i+1].type == 'smRNA':
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
             
         # If current part is last part, define reverse primer with right backbone overlap and forward primer ordinarily
             elif i == len(parts_list)-1:
-                parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + bb_overlaps[-1] + enzms[enzm][1])
+                parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + bb_overlaps[-1] + enzms[enzm][1])
                 parts_list[i].sequence = parts_list[i].sequence + bb_overlaps[-1] + enzms[enzm][1]
             
         # If current part is not first or last part, do ordinary computation
             else:
                 if parts_list[i].type == 'pegRNA':
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76-max_annealing_len:parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + enzms[enzm][1])
-                    parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + parts_list[i+1].sequence[:max_annealing_len]
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76-max_ann_len:parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + parts_list[i+1].sequence[:max_ann_len]
                     parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + parts_list[i+1].sequence
                     parts_list[i].sequence = parts_list[i].sequence[:parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + enzms[enzm][1]
                 elif parts_list[i].type == 'gRNA':
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
                     parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                     if parts_list[i+1].type == 'smRNA':
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 elif parts_list[i].type == 'smRNA':
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
                     parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                     if parts_list[i+1].type == 'smRNA':
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                 else: #part is tRNA
-                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_annealing_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
+                    parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
                     parts_list[i].sequence = parts_list[i].sequence + parts_list[i+1].sequence[:parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                     if parts_list[i+1].type == 'smRNA':
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(tRNA.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                     else:
-                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_annealing_len]
+                        parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:parts_list[i+1].sequence.find(scaffld.lower())+max_ann_len]
                         parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i+1].sequence[parts_list[i+1].sequence.find(gg_opt[i])+len(gg_opt[i])-4:]
                             
-    elif poltype_gg=='ca':
+    elif poltype=='ca':
         for i in range(len(parts_list)):
             
             # If current part is first part, define forward primer with left backbone overlap and reverse primer ordinarily
@@ -513,106 +566,53 @@ def scarless_gg(parts_list, primer_tm_range=[52,72], max_annealing_len=30, bb_ov
                 parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + DR
                 parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + parts_list[i+1].sequence
                 parts_list[i].sequence = parts_list[i].sequence[:parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
-        
-        new_parts_list.append(parts_list)
-        return new_parts_list[0],ftrs,msg # If CA, skip the primer optimization step, since the DR is very short
                             
-    new_parts_list.append(parts_list)
+    for o in parts_list:
+        o.primer_forward = o.primer_forward[:len(enzms[enzm][0])].lower() + o.primer_forward[len(enzms[enzm][0]):len(enzms[enzm][0])+4].upper() + o.primer_forward[len(enzms[enzm][0])+4:].lower()
+        o.primer_reverse = o.primer_reverse[:len(enzms[enzm][1])].lower() + o.primer_reverse[len(enzms[enzm][1]):len(enzms[enzm][1])+4].upper() + o.primer_reverse[len(enzms[enzm][1])+4:].lower()
+    
+    if poltype == 'ca':
+        polycistron.parts = parts_list
+        return polycistron,msg # If CA, skip the primer optimization step, since the DR is very short
+
+    polycistron.parts = parts_list
 
     
-    #Optimize primer Tm
-    for parts_list in new_parts_list:
-        for part in parts_list:
-            score_forw = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_forward]
-            score_rev = [1 if i in ['C','G','g','c'] else 0 for i in part.primer_reverse]
-            breakit=False
+    ## Optimise primer Tm    
+    for c,prmr in enumerate(flattn([[part.primer_forward, part.primer_reverse] for part in polycistron.parts])):
+    
+        prmrRest = prmr[:-max_ann_len]
+        prmrRestLen = len(prmrRest)
+    
+        scr = [1 if i in ['C','G','g','c'] else 0 for i in prmr] # Extract score from sequence for finding GC-clamps
+        optns = [prmr[:i] for i in range(len(prmr),len(prmr)-(max_ann_len-18+1), -1) if sum(scr[i-5:i]) in [1,2]] # Find all GC-clamps
+        checkStatic = [optn for optn in optns if tm_range[0] <= mt.Tm_NN(optn[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= tm_range[1]] # Find all GC-clamp options with static Tm inside provided range
+        checkWhole = [optn for optn in checkStatic if tm_range[0] <= mt.Tm_NN(optn, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= tm_range[1]] # Find all GC-clamp options with whole Tm inside provided range
+        
+        if checkWhole: # If there are GC-clamp options with whole Tm, use the shortest one to cut costs
+            fin = checkWhole[-1]
+        elif checkStatic: # If there are no GC-clamps with whole Tm but such with static Tm, use the shortest, to (1) cut costs and (2) get the Tm of the whole primer as close as possible to range.
+            fin = checkStatic[-1]
+        elif optns and mt.Tm_NN(optns[-1][prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) > tm_range[1]: # If all GC-clamps are above the range, use lowest one
+            fin = optns[-1]
+        elif optns and mt.Tm_NN(optns[0][prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < tm_range[0]: # If all GC-clamps are below the range, use highest one
+            fin = optns[0]
+        else: # If there are no GC-clamps, find the primer with static Tm closest to bottom of range for cutting costs
+            countUp = prmrRestLen+18
+            lastResort = prmr[prmrRestLen:countUp]
+            while mt.Tm_NN(lastResort, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < tm_range[0] and prmrRestLen + len(lastResort) < len(prmr):
+                countUp += 1
+                lastResort = prmr[prmrRestLen:countUp]
+            fin = prmr[:countUp]
+        
+        if c%2 == 0: # Assign the found primer and corresponding static Tm to the respective part
+            polycistron.parts[int(np.floor(c/2))].primer_forward = fin
+            polycistron.parts[int(np.floor(c/2))].primer_forward_tm = mt.Tm_NN(fin[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
+        else:
+            polycistron.parts[int(np.floor(c/2))].primer_reverse = fin
+            polycistron.parts[int(np.floor(c/2))].primer_reverse_tm = mt.Tm_NN(fin[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
             
-            # If both Tms are already below the range, find the nearest Gs
-            if mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0]:
-                for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                    if sum(score_forw[i-5:i]) in [1,2]:
-                        part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_forward = part.primer_forward[:i]
-                for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                    if sum(score_rev[j-5:j]) in [1,2]:
-                        part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_reverse = part.primer_reverse[:j]
-                
-            # If one Tm is below the range, lower the other to make them most similar and find nearest Gs
-            elif mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-                for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                    if sum(score_forw[i-5:i]) in [1,2]:
-                        part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_forward = part.primer_forward[:i]
-                for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                    if abs(part.primer_forward_tm-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and sum(score_rev[j-5:j]) in [1,2]:
-                        part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_reverse = part.primer_reverse[:j]
-                        breakit=True
-                if not breakit:
-                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-            elif mt.Tm_NN(part.primer_reverse, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) < primer_tm_range[0] and mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0]:
-                for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                    if sum(score_rev[j-5:j]) in [1,2]:
-                        part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_reverse = part.primer_reverse[:j]
-                for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                    if abs(part.primer_reverse_tm-mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)) <=5 and sum(score_forw[j-5:i]) in [1,2]:
-                        part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                        part.primer_forward = part.primer_forward[:i]
-                        breakit=True
-                if not breakit:
-                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward, nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-            
-            # If both Tms are within or above the range, lower them into the range and make them most similar and find nearest Gs
-            else:
-                breakit=False
-                # Do all of the above
-                for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                    for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                        if abs(mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)-mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50))<=5 and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                            part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                            part.primer_forward = part.primer_forward[:i]
-                            part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                            part.primer_reverse = part.primer_reverse[:j]
-                            breakit=True
-                        if breakit:
-                            break
-                    if breakit:
-                        break
-                # Do range and Gs        
-                if not breakit:
-                    for i in range(len(part.primer_forward),len(part.primer_forward)-(max_annealing_len-18),-1):
-                        for j in range(len(part.primer_reverse),len(part.primer_reverse)-(max_annealing_len-18),-1):
-                            if mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) >= primer_tm_range[0] and mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50) <= primer_tm_range[1] and sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                                part.primer_forward = part.primer_forward[:i]
-                                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                                part.primer_reverse = part.primer_reverse[:j]
-                                breakit=True
-                            if breakit:
-                                break
-                        if breakit:
-                            break
-                # Do only Gs nearest to range
-                if not breakit:
-                    for i in range(len(part.primer_forward)-1-(max_annealing_len-18), len(part.primer_forward)):
-                        for j in range(len(part.primer_reverse)-1-(max_annealing_len-18), len(part.primer_reverse)):
-                            if sum(score_rev[j-5:j]) in [1,2] and sum(score_forw[i-5:i]) in [1,2]:
-                                part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:i], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                                part.primer_forward = part.primer_forward[:i]
-                                part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:j], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                                part.primer_reverse = part.primer_reverse[:j]
-                                breakit=True
-                            if breakit:
-                                break
-                        if breakit:
-                            break
-                    
-                if not breakit:
-                    part.primer_forward_tm = mt.Tm_NN(part.primer_forward[:len(part.primer_forward)-reverse(part.primer_forward).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-                    part.primer_reverse_tm = mt.Tm_NN(part.primer_reverse[:len(part.primer_reverse)-reverse(part.primer_reverse).find('g')], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
-    return new_parts_list[0],ftrs,msg
+    return polycistron,msg
 
 
 def pegbldr(sequence, edits, mode='PE2'):
@@ -663,14 +663,20 @@ def pegbldr(sequence, edits, mode='PE2'):
         
         inds = [int(i) for i in str(edt[0]).split(',')]
         changes = str(edt[1]).upper().split(',')
+        if edt[2] == 'del':
+            changes = [str(int(chng)+1) for chng in changes] # deletion stretches should include the ending index for intuitive usability
 
         
                 ## Define pegRNA for editing
         
+        allInd = inds + [int(chng) for chng in changes if edt[2] == 'del']
+        maxInd = max(allInd)
+        minInd = min(allInd)
+        
         # Find all PAM motifs in forward and reverse strand in respective possible regions
-        pegPAMrgn_forw = seq[:inds[0]+6]                         # Define the region where PAM could possibly lie in forw strand
+        pegPAMrgn_forw = seq[:minInd+6]                       # Define the region where PAM could possibly lie in forw strand
         pegPAMs_forw = re.finditer(r'(?=(.GG))', pegPAMrgn_forw) # Find all PAMs in region
-        pegPAMrgn_rev = rev_comp[:len(seq)-inds[-1]+6]
+        pegPAMrgn_rev = rev_comp[:len(seq)-1-maxInd+6]
         pegPAMs_rev = re.finditer(r'(?=(.GG))', pegPAMrgn_rev)
         pegPAMs_forw = list(pegPAMs_forw)
         pegPAMs_rev = list(pegPAMs_rev)
@@ -683,7 +689,7 @@ def pegbldr(sequence, edits, mode='PE2'):
         
         # Check if there are PAMs in only one strand
         elif pegPAMs_forw == []:
-            pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
+            pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-max(inds))) for i in pegPAMs_rev])]
             pegPAM = pegPAM_rev
             pegPAM_strand = 'r'
             seq = rev_comp[:]
@@ -691,14 +697,14 @@ def pegbldr(sequence, edits, mode='PE2'):
             inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
             changes = [complement(i) for i in changes]
         elif pegPAMs_rev == []:
-            pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
+            pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-min(inds)) for i in pegPAMs_forw])]
             pegPAM = pegPAM_forw
             pegPAM_strand = 'f'
         
-        # If there are PAMs in both strands, choose the one closest to edit
+        # If there are PAMs in both strands, choose the one closest to edit. inf is used to make sure the list is not empty but will never be chosen.
         else:
-            forw_min = min([abs(i-1-inds[0]) for i in pegPAMs_forw])
-            rev_min = min([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])
+            forw_min = min([abs(i-1-inds[0]) for i in pegPAMs_forw] + [np.inf])
+            rev_min = min([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev] + [np.inf])
             pegPAM_forw = pegPAMs_forw[np.argmin([abs(i-1-inds[0]) for i in pegPAMs_forw])]
             pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev])]
             if forw_min <= rev_min: # Of the closest PAM of each strand, which is closest to mutation? -1 because len(x) == ind(x[-1])+1
@@ -709,9 +715,19 @@ def pegbldr(sequence, edits, mode='PE2'):
                 pegPAM_strand = 'r'
                 seq = rev_comp[:]
                 rev_comp = sequence[:]
-                inds = [len(seq)-i-1 for i in inds]              # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
-                changes = [complement(i) for i in changes]
-        
+                if edt[2] == 'mut':
+                    inds = [len(seq)-i-1 for i in inds]              # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
+                    changes = [complement(i) for i in changes]
+                elif edt[2] == 'ins':
+                    inds = [len(seq)-i for i in inds]
+                    changes = [complement(i) for i in changes]
+                else:
+                    changes = [int(chng) for chng in changes] # Change type of changes to int
+                    changes_plc = changes[:] # create placeholder
+                    changes = [len(seq)-i-1 for i in inds] # switch changes and inds
+                    inds = [len(seq)-i-1 for i in changes_plc]
+                    
+                        
         if inds[-1]-pegPAM > 30:
                 warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
 
@@ -725,7 +741,7 @@ def pegbldr(sequence, edits, mode='PE2'):
         # Calculate RT templates depending on type of edit
         if edt[2] == 'mut':                                      # Check if edit is point mutation
             
-            pre_RT_len = max([13, inds[-1]-(pegPAM-3)])          # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
+            pre_RT_len = max([13, max(inds)-(pegPAM-3)])          # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start() # From default length find next D
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]      # Retrieve RT-template
             RT_templ = [i for i in RT_templ]
@@ -735,28 +751,28 @@ def pegbldr(sequence, edits, mode='PE2'):
                 
         elif edt[2] == 'ins':
             
-            pre_RT_len = max([13, inds[-1]-(pegPAM-3)+6])        # template should have additional length 5' of insert to ensure binding
+            pre_RT_len = max([13, max(inds)-(pegPAM-3)+6])        # template should have additional length 5' of insert to ensure binding
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start()
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]
             RT_templ = [i for i in RT_templ]
-            
             for c_pm,pm in enumerate(inds):
                 RT_templ = RT_templ[:int(pm)-(pegPAM-3)] + [l for l in changes[c_pm]] + RT_templ[int(pm)-(pegPAM-3):]
                 
         elif edt[2] == 'del':
             
+            changes = [int(chng) for chng in changes]
             len_deltns = 0
             for c_pm,pm in enumerate(inds):
-                len_deltns += int(changes[c_pm])-pm
-            pre_RT_len = max([13, int(changes[-1])-(pegPAM-3)+6+len_deltns])
+                len_deltns += changes[c_pm]-pm
+            pre_RT_len = max([13, max(changes)-(pegPAM-3)+6+len_deltns])
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start()
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]
             RT_templ = [i for i in RT_templ]
             
             mmry = 0
             for c_pm,pm in enumerate(inds):
-                del RT_templ[pm-(pegPAM-3)-mmry:int(changes[c_pm])-(pegPAM-3)-mmry]
-                mmry += int(changes[c_pm])-pm
+                del RT_templ[pm-(pegPAM-3)-mmry:changes[c_pm]-(pegPAM-3)-mmry]
+                mmry += changes[c_pm]-pm
                 
         RT_templ = ''.join(RT_templ)
         
@@ -765,130 +781,80 @@ def pegbldr(sequence, edits, mode='PE2'):
         pegRNA = pegspacer + scaffld.upper() + RT_templ + PBS
         
         out.append(['pegRNA'+str(c), 'pegRNA', pegRNA, pegPAM_strand])
-        
+
         ## Define gRNA for PE3
         if mode == 'PE3':
             
-            old = []
-            seq = [i for i in seq]
+            nuseq = [i for i in seq]
+            mmry = 0
 
-            for i in range(len(inds)):
-                old.append(seq[inds[i]])
-                seq[inds[i]] = changes[i]
-            seq = ''.join(seq)
+            for c2,ind in enumerate(inds):
+                if edt[2] == 'mut':
+                    nuseq[ind] = changes[c2]
+                elif edt[2] == 'ins':
+                    nuseq = nuseq[:ind] + [b for b in changes[c2]] + nuseq[ind:]
+                elif edt[2] == 'del':
+                    del nuseq[ind:changes[c2]]
+            nuseq = ''.join(nuseq)
             
-            gPAMrgn = reverse_complement(seq[pegPAM:])     # gRNA must bind to other strand somewhere after pegPAM
+            gPAMrgn = reverse_complement(nuseq[pegPAM-3:])     # gRNA must bind to other strand somewhere downstream of pegPAM
             gPAMs = re.finditer(r'(?=(.GG))', gPAMrgn)     # find all PAMs in that region
             gPAMs = np.array([i.start() for i in gPAMs])
-            gPAM = gPAMs[abs(np.array(gPAMs)-(len(gPAMrgn)-44)).argmin()] # Find PAM closest to 47 nt upstream of pegPAM nick
-                                                                          # (the gRNA nick should be 50 nt upstream of pegPAM nick)
+            gPAM = gPAMs[abs(np.array(gPAMs)-(len(gPAMrgn)-44)).argmin()] # Find PAM closest to 47 nt downstream of pegPAM nick
+                                                                          # (the gRNA nick should be 50 nt downstream of pegPAM nick)
 
             gspacer = gPAMrgn[gPAM-20:gPAM]                # Define spacer
 
             gRNA = gspacer
 
             out.append(['gRNA'+str(c), 'gRNA', gRNA, pegPAM_strand])
-
-            seq = [i for i in seq]
-            for i in range(len(inds)):
-                seq[inds[i]] = old[i]
-            seq = ''.join(seq)
-    
+            
     return out
 
 
-def PTGbldr(inserts, poltype_bldr='ptg'):
+def PTGbldr(name, inserts, poltype='ptg'):
     '''
     Takes all desired parts of PTG GG assembly and gives out the respective inserts for PTG. During the 
     process, each part is appended with the same tRNA. The unit of part and tRNA are then treated as one insert.
     
-    :param inserts: List of parts of the form [['name', 'type', 'sequence'],[...]]
+    :param inserts: List of parts of the form [['type', 'sequence'],[...]]
     :type inserts: list
-    :param poltype_bldr: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
-    :type poltype_bldr: str, optional
+    :param poltype: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
+    :type poltype: str, optional
     '''
     
-    if poltype_bldr=='ptg':
+    if poltype=='ptg':
         PTG_parts = []
-        PTG_parts.append(Part('tRNA', 'tRNA', tRNA))
+        PTG_parts.append(Part(name+'_0', 'tRNA', tRNA))
+        c = 1
     
         ## Take each coding sequence of the output and append it with a tRNA to the list
-        for c,prt in enumerate(inserts):
-            if prt[1] == 'pegRNA':
-                PTG_parts.append(Part(prt[0], prt[1], str(prt[2])))
-                PTG_parts.append(Part('tRNA', 'tRNA', tRNA))
-            elif prt[1] == 'gRNA':
-                PTG_parts.append(Part(prt[0], prt[1], str(prt[2]) + scaffld + tRNA))
-            elif prt[1] == 'smRNA':
-                PTG_parts.append(Part(prt[0], prt[1], str(prt[2]) + tRNA))
+        for prt in inserts:
+            if prt[0] not in ['pegRNA', 'gRNA', 'smRNA']:
+                raise InvalidUsage("crRNAs should be processed in CA", status_code=400, payload={'pge': 'sequence.html', 'box': 'poltype_input'})
+            if prt[0] == 'pegRNA':
+                PTG_parts.append(Part(name+'_'+str(c), 'pegRNA', str(prt[1])))
+                PTG_parts.append(Part(name+'_'+str(c+1), 'tRNA', tRNA))
+                c += 2
+            elif prt[0] == 'gRNA':
+                PTG_parts.append(Part(name+'_'+str(c), 'gRNA', str(prt[1]) + scaffld + tRNA))
+                c += 1
+            elif prt[0] == 'smRNA':
+                PTG_parts.append(Part(name+'_'+str(c), 'smRNA', str(prt[1]) + tRNA))
+                c += 1
     
         return PTG_parts
         
-    elif poltype_bldr=='ca':
+    elif poltype=='ca':
         CA_parts = []
+        c = 0
         
         for c,prt in enumerate(inserts):
-            if prt[1] != 'crRNA':
-                raise InvalidUsage("ca can only process crRNAs", status_code=400, payload={'pge': 'sequence.html', 'box': 'poltype_input'})
-            CA_parts.append(Part(prt[0], prt[1], DR + str(prt[2])))
+            if prt[0] != 'crRNA':
+                raise InvalidUsage("CA can only process crRNAs", status_code=400, payload={'pge': 'sequence.html', 'box': 'poltype_input'})
+            CA_parts.append(Part(name+'_'+str(c), prt[0], DR + str(prt[1])))
+            c += 1
         
-        CA_parts.append(Part('DR', 'DR', DR))
+        CA_parts.append(Part(name+'_'+str(c), 'DR', DR))
             
         return CA_parts
-
-
-# Execute computation
-def runall(arr, tm_range=[52,72], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype_run='ptg', enzm='bsai'):
-    '''
-    The main gateway function of PolyGEN. Navigates through the necessary functions for PTG design
-    
-    :param arr: An array of the form [['name', 'type', 'sequence'],[...]]
-    :type arr: list
-    :param tm_range: An array of integers of length 2. Temperature range to aim for during primer optimization, defaults to [52,73]
-    :type tm_range: list, optional
-    :param max_ann_len: The maximal annealing length of the static part of the primer, defaults to 30
-    :type max_ann_len: int, optional
-    :param bb_overlaps: Linkers of the destination plasmid flanking the final PTG, defaults to ['tgcc','gttt']
-    :type bb_overlaps: list, optional
-    :param additional_overhangs: Additional linkers in the destination plasmid, defaults to []
-    :type additional_overhangs: list, optional
-    :param poltype_run: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
-    :type poltype_run: str, optional
-    :param enzm: Type II restriction enzyme to use for the Golden Gate assembly. Defaults to 'bsai'
-    :type enzm: str, optional
-    
-    :return: Returns five objects (1) A list of newly computed parts of class Part, (2) The full sequence of the PTG containing the BsaI recognition site and linker at the 5' and 3' ends, (3) A list of features of class SeqRecord, (4) An error or warning message, (5) The full list of oligos for part generation via PCR
-    :rtype: list, str, list, str, list
-    '''
-    
-    for e in arr:
-        if len(e) != 3:
-            raise InvalidUsage("Invalid input syntax", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
-        elif e[1] not in ['gRNA', 'pegRNA', 'smRNA', 'crRNA']:
-            raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
-        elif re.search(r'^[ACGTacgt]*$', e[2]) is None:
-            raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
-    
-    for lnk in bb_overlaps+additional_overhangs:
-        if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
-            raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
-    
-    msg = None
-    full_sequence = ''
-    PTG = PTGbldr(arr, poltype_run)
-    outpt,feat,msg = scarless_gg(PTG, tm_range, max_ann_len, bb_overlaps, additional_overhangs, poltype_run, enzm)
-    
-    oligos = []
-    if outpt is not None:
-        for c,o in enumerate(outpt):
-            oligos.append(o.primer_forward)
-            oligos.append(o.primer_reverse)
-            if c == 0:
-                full_sequence += o.sequence[:-13]
-            elif c == len(outpt)-1:
-                full_sequence += o.sequence[9:]
-            else:
-                full_sequence += o.sequence[9:-13]
-
-    return outpt,full_sequence,feat,msg,oligos
-

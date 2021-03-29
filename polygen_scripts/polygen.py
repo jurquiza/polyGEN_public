@@ -25,15 +25,15 @@ def learn():
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
     session['msg'] = None
-    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF'}
+    session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF', 'PTG_name': '#FFFFFF'}
     session['enzm_site'] = ['gaggtctcg', 'cgagacctc']
     enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['agaagacag', 'ctgtcttct']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
     
     if request.method == "POST":
         if request.form['submit_button'] == 'submit':
-            runall_args = {}
-            runall_args['poltype_run'] = request.form["poltype_input"]
-            runall_args['enzm'] = request.form['enzm_input']
+            args = {}
+            args['poltype'] = request.form["poltype_input"]
+            args['enzm'] = request.form['enzm_input']
             session['enzm_site'] = enzms[request.form['enzm_input']]
             session['PTG_name'] = request.form["PTG_name"]
             session['oligo_prefix'] = request.form["oligo_prefix"]
@@ -41,13 +41,20 @@ def sequence():
             session['PTG_transfer'] = request.form["sequence_spacers"]
             session['bb_ovrhng'] = request.form["bb_ovrhng"]
             session['add_ovrhng'] = request.form["add_ovrhng"]
+            session['max_ann_len'] = request.form['maxAnnLen']
         
-            runall_args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
+            args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
+            args['bb_overlaps'] = ['tgcc', 'gttt']
+            args['additional_overhangs'] = []
             if session['bb_ovrhng']:
-                runall_args['bb_overlaps'] = session["bb_ovrhng"].split(';')
+                args['bb_overlaps'] = session["bb_ovrhng"].split(';')
             if session['add_ovrhng']:
-                runall_args['additional_overhangs'] = session["add_ovrhng"].split(';')
+                args['additional_overhangs'] = session["add_ovrhng"].split(';')
+            if session['max_ann_len']:
+                args['max_ann_len'] = int(session['max_ann_len'])
             
+            if '/' in session['PTG_name']:
+                raise InvalidUsage("Polycistron name may not contain a '/'", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_name'})
             if session['PTG_transfer'] == '':
                 raise InvalidUsage("You must specify a polycistron description", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
             if session['oligo_index'] != '' and re.search(r'^[0-9]*$', session['oligo_index']) is None:
@@ -55,19 +62,27 @@ def sequence():
             
             PTG_input = session['PTG_transfer'].split('|')
             PTG_structure = []
-            PTG_index=1
             for element in PTG_input:
-                element_list=[]
-                element_list.append([session['PTG_name'] if session['PTG_name'] else 'PTG'][0]+'_'+str(PTG_index))
-                PTG_index+=1
-                for e in element.split(';'):
-                    element_list.append(e)
-                PTG_structure.append(element_list)  
-
-            session['out'],session['full_seq'],session['ftrs'],session['msg'],session['primers'] = runall(PTG_structure, **runall_args)
+                e = element.split(';')
+                if len(e) != 2:
+                    raise InvalidUsage("Invalid input syntax", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+                elif e[0] not in ['gRNA', 'pegRNA', 'smRNA', 'crRNA']:
+                    raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+                elif re.search(r'^[ACGTacgt]*$', e[1]) is None:
+                    raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+                else:
+                    PTG_structure.append(e)
             
-            if session['msg'] == 'comb_error':
-                return render_template("sequence.html", session=session)
+            for lnk in args['bb_overlaps']+args['additional_overhangs']:
+                print(lnk)
+                if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
+                    raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
+            
+            PTG = PTGbldr(session['PTG_name'], PTG_structure, args['poltype'])
+            
+            print([prt.to_json() for prt in PTG])
+            
+            session['plcstrn'],session['msg'] = scarless_gg(PTG, **args)
         
             if not session['PTG_name']:
                 session['PTG_name'] = request.form['poltype_input'].upper()
@@ -75,7 +90,15 @@ def sequence():
                 session['oligo_prefix'] = 'o'
             if not session['oligo_index']:
                 session['oligo_index'] = '0'
-        
+            
+            if request.form.get('borderPrimers'):
+                if args['poltype_run'] == 'ptg':
+                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
+                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
+                if args['poltype_run'] == 'ca':
+                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
+                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
+
             return render_template("primer_list.html", session=session)
             
         elif request.form['submit_button'] == 'reset':
@@ -122,29 +145,33 @@ def serve_primers():
     positions = len(session['oligo_index'])
     collapsed_index = int(session['oligo_index'])
     oligo_ids = []
-    for primer in session['primers']:
+    
+    for primer in flattn([[i.primer_forward, i.primer_reverse] for i in session['plcstrn'].parts]):
         oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0'+str(positions)))
         csv += session['oligo_prefix']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
         collapsed_index += 1
     
     csv += '\nTable of fragments:\n'
     csv += 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
-    for c,fragment in enumerate(session['out']):
+    for c,fragment in enumerate(session['plcstrn'].parts):
         csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
     
-    sr = SeqRecord(seq=Seq(session['full_seq'], alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
-    for ftr in session['ftrs']:
+    sr = SeqRecord(seq=Seq(session['plcstrn'].sequence, alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
+    for ftr in session['plcstrn'].features:
         sr.features.append(ftr)
+    gb_json = {}
+    gb_json['polycistron'] = polyToJson(session['plcstrn'])
+    gb_json['msg'] = session['msg']
     
     in_memory = BytesIO()
     zf = ZipFile(in_memory, mode='w')
     zf.writestr(session['PTG_name']+"_oligos.csv", csv)
     zf.writestr(session['PTG_name']+".gb", sr.format('genbank'))
+    zf.writestr(session['PTG_name']+'_raw.json', json.dumps(gb_json))
     with open('protocol.txt') as f:
         zf.writestr('protocol.txt', f.read())
     zf.close()
     in_memory.seek(0)
-    
     outpt = in_memory.read()
     
     return Response(
