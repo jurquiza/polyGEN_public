@@ -361,12 +361,10 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     msg=None
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
-    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['agaagacag', 'ctgtcttct']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
 
     
-    # Go through parts and write all known annotations into list
-    new_parts_list = []
-    
+    # Go through parts and write all known annotations into list   
     mmry = len(enzms[enzm][0])+4
     polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0])
     for part in parts_list:
@@ -573,7 +571,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     
     if poltype == 'ca':
         polycistron.parts = parts_list
-        return polycistron,msg # If CA, skip the primer optimization step, since the DR is very short
+        return polycistron,msg # If CA, the primer optimization step can be skipped, since the DR is very short
 
     polycistron.parts = parts_list
 

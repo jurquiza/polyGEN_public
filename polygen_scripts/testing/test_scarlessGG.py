@@ -191,7 +191,7 @@ class TestScarlessGG(unittest.TestCase):
         result = {}
         result['polycistron'],result['msg'] = scarless_gg(**args)
         result['polycistron'] = polyToJson(result['polycistron'])
-        with open('testing/pg_test7_bbsi_2021-03-26/test7_bbsi_raw.json', 'r') as f:
+        with open('testing/pg_test7_bbsi_2021-03-31/test7_bbsi_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
             
