@@ -331,7 +331,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
 
 #Copyright (c) 2019 Scott Weisberg
 # Perform scarless Golden Gate assembly computation with provided parts
-def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype='ptg', enzm='bsai'):
+def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['ggca','aaac'], additional_overhangs=[], poltype='ptg', enzm='bsai'):
     '''
     Uses a list of desired parts and additional arguments to compute a corresponsing PTG. Returns a list of newly computed parts and their primers which can be used to generate the PTG.
     
@@ -341,7 +341,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     :type tm_range: list, optional
     :param max_ann_len: The maximal annealing length of the static part of the primer, defaults to 30
     :type max_ann_len: int, optional
-    :param bb_overlaps: Linkers of the destination plasmid flanking the final PTG, defaults to ['tgcc','gttt']
+    :param bb_overlaps: Linkers of the destination plasmid flanking the final PTG, defaults to ['ggca','aaac']
     :type bb_overlaps: list, optional
     :param additional_overhangs: Additional linkers in the destination plasmid, defaults to []
     :type additional_overhangs: list, optional
@@ -401,7 +401,8 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
                     temp.append(s)
 
             # Only grab sets that include all existing overhangs and delete the existing from the set
-            if all(i in [x.lower() for x in temp[q]] for i in existing_overhangs):
+            st = [x.lower() for x in temp[q]]
+            if all(i in st or reverse_complement(i) in st for i in existing_overhangs):
                 free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
             else:
                 continue

@@ -44,7 +44,7 @@ def sequence():
             session['max_ann_len'] = request.form['maxAnnLen']
         
             args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
-            args['bb_overlaps'] = ['tgcc', 'gttt']
+            args['bb_overlaps'] = ['ggca', 'aaac']
             args['additional_overhangs'] = []
             if session['bb_ovrhng']:
                 args['bb_overlaps'] = session["bb_ovrhng"].split(';')
