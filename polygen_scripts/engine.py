@@ -5,7 +5,6 @@ import csv
 import itertools
 import re
 import pandas as pd
-import warnings
 import json
 import copy
 from Bio.SeqUtils import MeltingTemp as mt
@@ -357,8 +356,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     
     polycistron = Polycistron()
     polycistron.features = [] # must overwrite with empty list because features list would accumulate across runs in same session through append command
-
-    msg=None
+    
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
     enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
@@ -449,7 +447,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
                         
                     exist = ','.join(sublist)
                     nexist = ','.join(Diff(sublist, existing_overhangs))
-                    msg = 'The given combination of existing overhangs is not compatible with an optimal overhang set. Found the set including the largest possible fraction of existing overhangs ('+exist+'). The following overhangs were disregarded: '+nexist+'. There might be interference between overhangs.'
+                    polycistron.warning = 'The given combination of existing overhangs is not compatible with an optimal overhang set. Found the set including the largest possible fraction of existing overhangs ('+exist+'). The following overhangs were disregarded: '+nexist+'. There might be interference between overhangs.'
                 if breakit:
                     break
             if breakit:
@@ -571,7 +569,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     
     if poltype == 'ca':
         polycistron.parts = parts_list
-        return polycistron,msg # If CA, the primer optimization step can be skipped, since the DR is very short
+        return polycistron # If CA, the primer optimization step can be skipped, since the DR is very short
 
     polycistron.parts = parts_list
 
@@ -610,7 +608,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
             polycistron.parts[int(np.floor(c/2))].primer_reverse = fin
             polycistron.parts[int(np.floor(c/2))].primer_reverse_tm = mt.Tm_NN(fin[prmrRestLen:], nn_table=mt.DNA_NN3, dnac1=125, dnac2=125, Na=50)
             
-    return polycistron,msg
+    return polycistron
 
 
 def pegbldr(sequence, edits, mode='PE2'):
@@ -627,7 +625,8 @@ def pegbldr(sequence, edits, mode='PE2'):
     :return: A list of lists containing for each computed guide RNA the name, type, sequence and strand specifications
     :rtype: list
     '''
-
+    msg = None
+    
     if sequence == '':
         raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
     elif re.search(r'^[ACGTacgt]*$', sequence) is None:
@@ -724,10 +723,9 @@ def pegbldr(sequence, edits, mode='PE2'):
                     changes_plc = changes[:] # create placeholder
                     changes = [len(seq)-i-1 for i in inds] # switch changes and inds
                     inds = [len(seq)-i-1 for i in changes_plc]
-                    
-                        
-        if inds[-1]-pegPAM > 30:
-                warnings.warn("There is no PAM motif in +/- 30 nt proximity of edit " + str(c))
+                                  
+        if max(inds)-pegPAM > 30:
+                msg = "There was no PAM motif in +/- 30 nt proximity of edit " + str(c) + ". Used the nearest one, which was " + str(max(inds)-pegPAM) + " bp away."
 
         if pegPAM-20 < 0:
             raise InvalidUsage("The provided sequence does not cover enough area around the edit", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
@@ -806,8 +804,8 @@ def pegbldr(sequence, edits, mode='PE2'):
             gRNA = gspacer
 
             out.append(['gRNA'+str(c), 'gRNA', gRNA, pegPAM_strand])
-            
-    return out
+    
+    return out,msg
 
 
 def PTGbldr(name, inserts, poltype='ptg'):

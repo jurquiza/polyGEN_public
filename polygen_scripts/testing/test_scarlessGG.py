@@ -4,7 +4,7 @@ import json
 from engine import scarless_gg,Part,polyToJson,flattn
 
 class TestScarlessGG(unittest.TestCase):
-    def test_scarlessgg_test_gRNAs(self):
+    def test_scarlessgg_test0_gRNAs(self):
         '''
         Test if a standard PTG ([55-65],30,[tgcc,gttt],[],ptg,bsai) from 3 gRNAs is constructed correctly
         '''
@@ -21,8 +21,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test0_gRNAs_2021-03-26/test0_gRNAs_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -45,8 +44,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test1_PE_2021-03-26/test1_PE_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -69,8 +67,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test2_smRNAs_2021-03-26/test2_smRNAs_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -93,8 +90,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test3_mixed_2021-03-26/test3_mixed_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -117,8 +113,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ca',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test4_ca_2021-03-26/test4_ca_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -141,8 +136,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsmbi'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test5_bsmbi_2021-03-26/test5_bsmbi_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -165,8 +159,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'btgzi'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test6_btgzi_2021-03-26/test6_btgzi_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -189,8 +182,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bbsi'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test7_bbsi_2021-03-31/test7_bbsi_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -213,8 +205,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test8_addedLinkers_2021-03-26/test8_addedLinkers_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -237,8 +228,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test9_borderLinkers_2021-03-26/test9_borderLinkers_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -261,8 +251,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test10_lowerTemp_2021-03-26/test10_lowerTemp_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -285,8 +274,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test11_higherTemp_2021-03-26/test11_higherTemp_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
@@ -309,8 +297,7 @@ class TestScarlessGG(unittest.TestCase):
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
-        result['polycistron'],result['msg'] = scarless_gg(**args)
-        result['polycistron'] = polyToJson(result['polycistron'])
+        result = polyToJson(scarless_gg(**args))
         with open('testing/pg_test12_annLen_2021-03-26/test12_annLen_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
