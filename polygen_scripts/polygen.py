@@ -41,7 +41,6 @@ def sequence():
             session['PTG_transfer'] = request.form["sequence_spacers"]
             session['bb_ovrhng'] = request.form["bb_ovrhng"]
             session['add_ovrhng'] = request.form["add_ovrhng"]
-            session['max_ann_len'] = request.form['maxAnnLen']
         
             args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
             args['bb_overlaps'] = ['ggca', 'aaac']
@@ -50,8 +49,6 @@ def sequence():
                 args['bb_overlaps'] = session["bb_ovrhng"].split(';')
             if session['add_ovrhng']:
                 args['additional_overhangs'] = session["add_ovrhng"].split(';')
-            if session['max_ann_len']:
-                args['max_ann_len'] = int(session['max_ann_len'])
             
             if '/' in session['PTG_name']:
                 raise InvalidUsage("Polycistron name may not contain a '/'", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_name'})

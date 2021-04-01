@@ -445,7 +445,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['ggca
                     gg_opt = golden_gate_optimization(parts_list, free_overhangsets, poltype)
                 if gg_opt is not None:
                     breakit = True
-                        
+                    
                     exist = ','.join(sublist)
                     nexist = ','.join(Diff(sublist, existing_overhangs))
                     polycistron.warning = 'The given combination of existing overhangs is not compatible with an optimal overhang set. Found the set including the largest possible fraction of existing overhangs ('+exist+'). The following overhangs were disregarded: '+nexist+'. There might be interference between overhangs.'

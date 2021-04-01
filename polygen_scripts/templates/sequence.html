@@ -140,17 +140,6 @@
       <div class="row">
         <div class="col-6">
           <div class="form-group">
-            <label for="maxAnnLen">Max. static annealing length</label>
-            <span class="fa fa-info-circle" data-toggle='tooltip' title="The maximal length of the primer that will anneal to the template in the first round of amplification. Defaults to 30 and should not go below 18."></span>
-          </div>
-        </div>
-        <div class="col-6">
-          <input type="number" name="maxAnnLen" id="maxAnnLen" placeholder="30" value="{{ session['maxAnnLen'] }}">
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-6">
-          <div class="form-group">
             <label for="borderPrimers">Invariable border primers</label>
             <span class="fa fa-info-circle" data-toggle='tooltip' title="Should the forward primer of the first fragment and reverse primer of the last fragment be set to an unchanging default? When performing multiple PTG experiments, these primers could then be reused between experiments."></span>
           </div>
