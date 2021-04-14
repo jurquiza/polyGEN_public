@@ -1,0 +1,33 @@
+LOCUS       test7_bbsi               583 bp    DNA     linear   UNK 31-MAR-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            15..91
+     smRNA           92..189
+     smRNA           92..112
+     tRNA            113..189
+     pegRNA          190..319
+     spacer          190..209
+     RT_template     286..306
+     PBS             307..319
+     tRNA            320..396
+     gRNA            397..569
+     spacer          397..416
+     tRNA            493..569
+ORIGIN
+        1 ttgaagactt ggcaaacaaa gcaccagtgg tctagtggta gaatagtacc ctgccacggt
+       61 acagacccgg gttcgattcc cggctggtgc agctaggtgc aacaagttca ataacaaagc
+      121 accagtggtc tagtggtaga atagtaccct gccacggtac agacccgggt tcgattcccg
+      181 gctggtgcac aactacaaga cccgcgccgg ttttagagct agaaatagca agttaaaata
+      241 aggctagtcc gttatcaact tgaaaaagtg gcaccgagtc ggtgctgtcg ccctccttca
+      301 cctcggcgcg ggtcttgtaa acaaagcacc agtggtctag tggtagaata gtaccctgcc
+      361 acggtacaga cccgggttcg attcccggct ggtgcacgat gcccttcagc tcgatggttt
+      421 tagagctaga aatagcaagt taaaataagg ctagtccgtt atcaacttga aaaagtggca
+      481 ccgagtcggt gcaacaaagc accagtggtc tagtggtaga atagtaccct gccacggtac
+      541 agacccgggt tcgattcccg gctggtgcag tttaagtctt caa
+//

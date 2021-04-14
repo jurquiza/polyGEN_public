@@ -24,13 +24,13 @@ def learn():
 
 @app.route("/ptg", methods=["POST","GET"])
 def sequence():
-    session['msg'] = None
     session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF', 'PTG_name': '#FFFFFF'}
     session['enzm_site'] = ['gaggtctcg', 'cgagacctc']
-    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['agaagacag', 'ctgtcttct']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
     
     if request.method == "POST":
         if request.form['submit_button'] == 'submit':
+            session['msg'] = None
             args = {}
             args['poltype'] = request.form["poltype_input"]
             args['enzm'] = request.form['enzm_input']
@@ -41,17 +41,14 @@ def sequence():
             session['PTG_transfer'] = request.form["sequence_spacers"]
             session['bb_ovrhng'] = request.form["bb_ovrhng"]
             session['add_ovrhng'] = request.form["add_ovrhng"]
-            session['max_ann_len'] = request.form['maxAnnLen']
         
             args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
-            args['bb_overlaps'] = ['tgcc', 'gttt']
+            args['bb_overlaps'] = ['ggca', 'aaac']
             args['additional_overhangs'] = []
             if session['bb_ovrhng']:
                 args['bb_overlaps'] = session["bb_ovrhng"].split(';')
             if session['add_ovrhng']:
                 args['additional_overhangs'] = session["add_ovrhng"].split(';')
-            if session['max_ann_len']:
-                args['max_ann_len'] = int(session['max_ann_len'])
             
             if '/' in session['PTG_name']:
                 raise InvalidUsage("Polycistron name may not contain a '/'", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_name'})
@@ -74,15 +71,15 @@ def sequence():
                     PTG_structure.append(e)
             
             for lnk in args['bb_overlaps']+args['additional_overhangs']:
-                print(lnk)
                 if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
                     raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
             
             PTG = PTGbldr(session['PTG_name'], PTG_structure, args['poltype'])
             
-            print([prt.to_json() for prt in PTG])
+            session['plcstrn'] = scarless_gg(PTG, **args)
             
-            session['plcstrn'],session['msg'] = scarless_gg(PTG, **args)
+            if session['plcstrn'].warning:
+                session['msg'] = session['plcstrn'].warning
         
             if not session['PTG_name']:
                 session['PTG_name'] = request.form['poltype_input'].upper()
@@ -125,7 +122,7 @@ def peg_generation():
         for edt in PEG_edits:
             pegs_list.append(edt.split(';'))
 
-        edits_list = pegbldr(session['PEG_sequence'], pegs_list, PEG_mode)
+        edits_list,session['msg'] = pegbldr(session['PEG_sequence'], pegs_list, PEG_mode)
 
         session['PTG_transfer'] = ''
         for c,peg in enumerate(edits_list):
@@ -134,6 +131,7 @@ def peg_generation():
                 session['PTG_transfer'] += '|'
 
         return redirect(url_for('sequence'))
+        
     else:
         return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)
       

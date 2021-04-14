@@ -45,7 +45,7 @@
       <div class="form-group">
         <label for="ControlInputbb">Border linkers</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the 4 bp linkers from BsaI digestion, which should flank the polycistron in your destination plasmid."></span>
-        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="ggca;aaac" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
     <div class="col-2">
@@ -79,7 +79,7 @@
     </div>
     <script>
       function update() {
-        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['A<b>GAAGAC</b>AG', 'T<b>CTTCTG</b>TC']}
+        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
         
         var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN'
         
@@ -124,7 +124,7 @@
   <div class="row" id="master" style="display: none; margin-top: 1%">
     <div class="col-5">
       <label for="slider-input">T<sub>M</sub> range</label>
-      <span class="fa fa-info-circle align-items-center" data-toggle='tooltip' title="Specify the temperature range you want your oligos to fall into in full length. The oligos will not necessarily stick to these boundaries, depending on the specified sequences."></span>
+      <span class="fa fa-info-circle align-items-center" data-toggle='tooltip' title="Specify the temperature range for the part of your primer which will anneal to the template in the first round of amplification. The oligos will not necessarily stick to these boundaries, depending on the template sequence."></span>
       <script src="{{url_for('static', filename='nouislider_materialize.js')}}"></script>
       <div id="slider"></div>
     </div>
@@ -137,17 +137,6 @@
       </div>
     </div>
     <div class="col-6">
-      <div class="row">
-        <div class="col-6">
-          <div class="form-group">
-            <label for="maxAnnLen">Max. static annealing length</label>
-            <span class="fa fa-info-circle" data-toggle='tooltip' title="The maximal length of the primer that will anneal to the template in the first round of amplification. Defaults to 30 and should not go below 18."></span>
-          </div>
-        </div>
-        <div class="col-6">
-          <input type="number" name="maxAnnLen" id="maxAnnLen" placeholder="30" value="{{ session['maxAnnLen'] }}">
-        </div>
-      </div>
       <div class="row">
         <div class="col-6">
           <div class="form-group">
