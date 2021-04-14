@@ -89,10 +89,10 @@ def sequence():
                 session['oligo_index'] = '0'
             
             if request.form.get('borderPrimers'):
-                if args['poltype_run'] == 'ptg':
+                if args['poltype'] == 'ptg':
                     session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
                     session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
-                if args['poltype_run'] == 'ca':
+                if args['poltype'] == 'ca':
                     session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
                     session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
 
