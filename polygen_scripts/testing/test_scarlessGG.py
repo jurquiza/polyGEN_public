@@ -165,14 +165,14 @@ class TestScarlessGG(unittest.TestCase):
             self.assertEqual(result, expected)
 
 
-    def test_scarlessgg_test7_bbsi(self):
+    def test_scarlessgg_test7_bpii(self):
         '''
-        Test if a bbsi mixed PTG ([55-65],30,[tgcc,gttt],[],ptg,bbsi) is constructed correctly
+        Test if a bpii mixed PTG ([55-65],30,[tgcc,gttt],[],ptg,bpii) is constructed correctly
         '''
         
         inpt = []
         with open('testing/test_input_data.json', 'r') as f:
-            inpt = [Part.from_json(prt) for prt in json.load(f)['test7_bbsi']]
+            inpt = [Part.from_json(prt) for prt in json.load(f)['test7_bpii']]
         
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
@@ -180,10 +180,10 @@ class TestScarlessGG(unittest.TestCase):
                 'bb_overlaps': ['tgcc', 'gttt'],
                 'additional_overhangs': [],
                 'poltype': 'ptg',
-                'enzm': 'bbsi'}
+                'enzm': 'bpii'}
         result = {}
         result = polyToJson(scarless_gg(**args))
-        with open('testing/pg_test7_bbsi_2021-03-31/test7_bbsi_raw.json', 'r') as f:
+        with open('testing/pg_test7_bpii_2021-03-31/test7_bpii_raw.json', 'r') as f:
             expected = json.load(f)
             self.assertEqual(result, expected)
             
