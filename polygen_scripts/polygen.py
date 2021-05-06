@@ -43,7 +43,7 @@ def sequence():
             session['add_ovrhng'] = request.form["add_ovrhng"]
         
             args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
-            args['bb_overlaps'] = ['ggca', 'aaac']
+            args['bb_overlaps'] = ['tgcc', 'gttt']
             args['additional_overhangs'] = []
             if session['bb_ovrhng']:
                 args['bb_overlaps'] = session["bb_ovrhng"].split(';')
@@ -75,7 +75,7 @@ def sequence():
                     raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
             
             PTG = PTGbldr(session['PTG_name'], PTG_structure, args['poltype'])
-            
+            print(args)
             session['plcstrn'] = scarless_gg(PTG, **args)
             
             if session['plcstrn'].warning:
