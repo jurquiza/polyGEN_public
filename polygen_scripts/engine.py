@@ -331,7 +331,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
 
 #Copyright (c) 2019 Scott Weisberg
 # Perform scarless Golden Gate assembly computation with provided parts
-def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['ggca','aaac'], additional_overhangs=[], poltype='ptg', enzm='bsai'):
+def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype='ptg', enzm='bsai'):
     '''
     Uses a list of desired parts and additional arguments to compute a corresponsing PTG. Returns a list of newly computed parts and their primers which can be used to generate the PTG.
     
@@ -341,7 +341,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['ggca
     :type tm_range: list, optional
     :param max_ann_len: The maximal annealing length of the static part of the primer, defaults to 30
     :type max_ann_len: int, optional
-    :param bb_overlaps: Linkers of the destination plasmid flanking the final PTG, defaults to ['ggca','aaac']
+    :param bb_overlaps: Linkers of the destination plasmid flanking the final PTG, defaults to ['tgcc','gttt']
     :type bb_overlaps: list, optional
     :param additional_overhangs: Additional linkers in the destination plasmid, defaults to []
     :type additional_overhangs: list, optional
@@ -353,18 +353,19 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['ggca
     :return: Returns three objects. (1) A list of newly computed parts of class Part, (2) A list of features of class SeqRecord, (3) An error or warning message
     :rtype: list, list, str
     '''
-    
+    print(bb_overlaps)
     polycistron = Polycistron()
     polycistron.features = [] # must overwrite with empty list because features list would accumulate across runs in same session through append command
     
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
-    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), pUU256 (bbsi)
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bpii': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bpii)
 
     
     # Go through parts and write all known annotations into list   
     mmry = len(enzms[enzm][0])+4
     polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0])
+    print(polycistron.sequence)
     for part in parts_list:
         part.sequence = part.sequence.lower()
         polycistron.sequence += part.sequence

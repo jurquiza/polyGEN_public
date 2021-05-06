@@ -45,7 +45,7 @@
       <div class="form-group">
         <label for="ControlInputbb">Border linkers</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the 4 bp linkers from BsaI digestion, which should flank the polycistron in your destination plasmid."></span>
-        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="ggca;aaac" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
     <div class="col-2">
@@ -73,13 +73,13 @@
           <option value="bsai">BsaI </option>
           <option value="bsmbi">BsmBI</option>
           <option value="btgzi">BtgZI</option>
-          <option value="bbsi">BbsI</option>
+          <option value="bpii">BpiI</option>
         </select>
       </div>
     </div>
     <script>
       function update() {
-        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
+        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bpii': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
         
         var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN'
         
