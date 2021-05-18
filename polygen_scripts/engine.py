@@ -115,7 +115,7 @@ def polyToJson(poly):
     ftrs = [vars(feat) for feat in p.features]
     for feat in ftrs:
         feat['location'] = vars(feat['location'])
-        
+    
     return {
         "sequence": p.sequence,
         "parts": [p.to_json() for p in p.parts],
@@ -353,7 +353,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     :return: Returns three objects. (1) A list of newly computed parts of class Part, (2) A list of features of class SeqRecord, (3) An error or warning message
     :rtype: list, list, str
     '''
-    print(bb_overlaps)
+    
     polycistron = Polycistron()
     polycistron.features = [] # must overwrite with empty list because features list would accumulate across runs in same session through append command
     
@@ -365,7 +365,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     # Go through parts and write all known annotations into list   
     mmry = len(enzms[enzm][0])+4
     polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0])
-    print(polycistron.sequence)
+    
     for part in parts_list:
         part.sequence = part.sequence.lower()
         polycistron.sequence += part.sequence
