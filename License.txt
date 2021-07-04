@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2021 Christoph Wagner
+Copyright (c) 2021 Christoph Wagner, Jose Maria Uriel Urquiza Garcia and Matias Daniel Zurbriggen
 
 Major components of the engine were adopted and heavily modified from Copyright 
 (c) 2019 Scott Weisberg. The components in question are marked as such and 
