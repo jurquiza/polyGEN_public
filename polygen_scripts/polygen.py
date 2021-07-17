@@ -75,7 +75,7 @@ def sequence():
                     raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
             
             PTG = PTGbldr(session['PTG_name'], PTG_structure, args['poltype'])
-            print(args)
+            
             session['plcstrn'] = scarless_gg(PTG, **args)
             
             if session['plcstrn'].warning:
