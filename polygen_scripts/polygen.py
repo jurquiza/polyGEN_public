@@ -41,15 +41,20 @@ def sequence():
             session['PTG_transfer'] = request.form["sequence_spacers"]
             session['bb_ovrhng'] = request.form["bb_ovrhng"]
             session['add_ovrhng'] = request.form["add_ovrhng"]
-            session['noBorderPrimers'] = request.form.get("noBorderPrimers")
+            session['borderPrimers'] = request.form.get('borderPrimers') if request.form.get('borderPrimers') else False
+            session['noBorderPrimers'] = request.form.get('noBorderPrimers') if request.form.get('noBorderPrimers') else False
         
-            args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
+            args['tm_range'] = session['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
             args['bb_overlaps'] = ['tgcc', 'gttt']
             args['additional_overhangs'] = []
             if session['bb_ovrhng']:
                 args['bb_overlaps'] = session["bb_ovrhng"].split(';')
+            else:
+                session['bb_ovrhng'] = ['tgcc', 'gttt']
             if session['add_ovrhng']:
                 args['additional_overhangs'] = session["add_ovrhng"].split(';')
+            else: 
+                session['add_ovrhng'] = []
             
             if '/' in session['PTG_name']:
                 raise InvalidUsage("Polycistron name may not contain a '/'", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_name'})
@@ -89,7 +94,7 @@ def sequence():
             if not session['oligo_index']:
                 session['oligo_index'] = '0'
             
-            if request.form.get('borderPrimers') or session['noBorderPrimers']:
+            if session['borderPrimers'] or session['noBorderPrimers']:
                 if args['poltype'] == 'ptg':
                     session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
                     session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
@@ -188,10 +193,24 @@ def serve_primers():
             session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=-1), type=oligo_ids[2*c+1]))
     
     
+    ## Append the fragment table to the csv file
     csv += '\nTable of fragments:\n'
     csv += 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
     for c,fragment in enumerate(session['plcstrn'].parts):
         csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
+    
+    ## Append the input parameters to the csv file
+    csv += '\nInput parameters:\n'
+    csv += 'Polycistron name:,' + session['PTG_name'] + '\n'
+    csv += 'Oligos prefix:,' + session['oligo_prefix'] + '\n'
+    csv += 'Starting index:,' + session['oligo_index'] + '\n'
+    csv += 'Border linkers:,' + '+'.join(session['bb_ovrhng']) + '\n'
+    csv += 'Addidional linkers:,' + '+'.join(session['add_ovrhng']) + '\n'
+    csv += 'Type of Polycistron:,' + session['poltype'] + '\n'
+    csv += 'Restriction enzyme:,' + session['enzm'] + '\n'
+    csv += 'Melting temperature range:,' + str(session['tm_range'][0]) + '-' + str(session['tm_range'][1]) + '\n'
+    csv += 'Invariable border primers:,' + str(session['borderPrimers']) + '\n'
+    csv += 'Omit border primers:,' + str(session['noBorderPrimers']) + '\n'
     
     sr = SeqRecord(seq=Seq(session['plcstrn'].sequence, alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
     for ftr in session['plcstrn'].features:
