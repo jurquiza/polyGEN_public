@@ -32,8 +32,8 @@ def sequence():
         if request.form['submit_button'] == 'submit':
             session['msg'] = None
             args = {}
-            args['poltype'] = request.form["poltype_input"]
-            args['enzm'] = request.form['enzm_input']
+            args['poltype'] = session['poltype'] = request.form["poltype_input"]
+            args['enzm'] = session['enzm'] = request.form['enzm_input']
             session['enzm_site'] = enzms[request.form['enzm_input']]
             session['PTG_name'] = request.form["PTG_name"]
             session['oligo_prefix'] = request.form["oligo_prefix"]
@@ -41,6 +41,7 @@ def sequence():
             session['PTG_transfer'] = request.form["sequence_spacers"]
             session['bb_ovrhng'] = request.form["bb_ovrhng"]
             session['add_ovrhng'] = request.form["add_ovrhng"]
+            session['noBorderPrimers'] = request.form.get("noBorderPrimers")
         
             args['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
             args['bb_overlaps'] = ['tgcc', 'gttt']
@@ -88,7 +89,7 @@ def sequence():
             if not session['oligo_index']:
                 session['oligo_index'] = '0'
             
-            if request.form.get('borderPrimers'):
+            if request.form.get('borderPrimers') or session['noBorderPrimers']:
                 if args['poltype'] == 'ptg':
                     session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
                     session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
@@ -96,7 +97,6 @@ def sequence():
                     session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
                     session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
             
-
             return render_template("primer_list.html", session=session)
             
         elif request.form['submit_button'] == 'reset':
@@ -145,10 +145,19 @@ def serve_primers():
     collapsed_index = int(session['oligo_index'])
     oligo_ids = []
     
-    for primer in flattn([[i.primer_forward, i.primer_reverse] for i in session['plcstrn'].parts]):
-        oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0' + str(positions)))
-        csv += session['oligo_prefix']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
-        collapsed_index += 1
+    primerList = flattn([[i.primer_forward, i.primer_reverse] for i in session['plcstrn'].parts])
+    for c,primer in enumerate(primerList):
+        if session['noBorderPrimers'] and c == 0:
+            oligo_ids.append('default_' + session['poltype'] + '_' + session['enzm'] + '_fw')
+            csv += 'default_' + session['poltype'] + '_' + session['enzm'] + '_fw,' + primer + '\n'
+        elif session['noBorderPrimers'] and c == len(primerList) - 1:
+            oligo_ids.append('default_' + session['poltype'] + '_' + session['enzm'] + '_rv')
+            csv += 'default_' + session['poltype'] + '_' + session['enzm'] + '_rv,' + primer + '\n'
+        else:
+            oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0' + str(positions)))
+            csv += session['oligo_prefix']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
+            collapsed_index += 1
+    
     
     ## Annotate primers in PTG sequence
     for c,part in enumerate(session['plcstrn'].parts):
