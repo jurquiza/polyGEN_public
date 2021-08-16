@@ -79,7 +79,8 @@ class Part:
             "primer_forward": self.primer_forward,
             "primer_reverse": self.primer_reverse,
             "primer_forward_tm": self.primer_forward_tm,
-            "primer_reverse_tm": self.primer_reverse_tm
+            "primer_reverse_tm": self.primer_reverse_tm,
+            "localisation": self.localisation
         }
     
     @classmethod
@@ -457,8 +458,8 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
         
     if gg_opt is None:
         raise InvalidUsage("No combination of optimal linkers possible for the provided existing linkers", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
-
-
+    
+    
     #Modify sequences and design primers
     if poltype=='ptg':
         for i in range(len(parts_list)):
@@ -565,20 +566,34 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
                 parts_list[i+1].sequence = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + parts_list[i+1].sequence
                 parts_list[i].sequence = parts_list[i].sequence[:parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1]
                             
+    ## Format enzyme cutting site in CAPITAL letters
     for o in parts_list:
         o.primer_forward = o.primer_forward[:len(enzms[enzm][0])].lower() + o.primer_forward[len(enzms[enzm][0]):len(enzms[enzm][0])+4].upper() + o.primer_forward[len(enzms[enzm][0])+4:].lower()
         o.primer_reverse = o.primer_reverse[:len(enzms[enzm][1])].lower() + o.primer_reverse[len(enzms[enzm][1]):len(enzms[enzm][1])+4].upper() + o.primer_reverse[len(enzms[enzm][1])+4:].lower()
     
-    if poltype == 'ca':
-        polycistron.parts = parts_list
-        return polycistron # If CA, the primer optimization step can be skipped, since the DR is very short
-
+    ## Assign localisation of parts in whole sequence
+    mmry = 0
+    for c,part in enumerate(parts_list):
+        if c == 0:
+            part.localisation = [mmry, mmry + len(part.sequence) - len(enzms[enzm][1])]
+            mmry += len(part.sequence) - len(enzms[enzm][1]) - 4
+        elif c == len(parts_list)-1:
+            part.localisation = [mmry, len(polycistron.sequence)]
+            mmry += len(polycistron.sequence)
+        else:
+            part.localisation = [mmry, mmry + len(part.sequence) - len(enzms[enzm][0]) - len(enzms[enzm][1])]
+            mmry += len(part.sequence) - len(enzms[enzm][0]) - len(enzms[enzm][1]) - 4
+    
     polycistron.parts = parts_list
+    
+    
+    if poltype == 'ca':
+        return polycistron # If CA, the primer optimization step can be skipped, since the DR is very short
 
     
     ## Optimise primer Tm    
     for c,prmr in enumerate(flattn([[part.primer_forward, part.primer_reverse] for part in polycistron.parts])):
-    
+        
         prmrRest = prmr[:-max_ann_len]
         prmrRestLen = len(prmrRest)
     

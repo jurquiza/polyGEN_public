@@ -95,6 +95,7 @@ def sequence():
                 if args['poltype'] == 'ca':
                     session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
                     session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
+            
 
             return render_template("primer_list.html", session=session)
             
@@ -145,9 +146,38 @@ def serve_primers():
     oligo_ids = []
     
     for primer in flattn([[i.primer_forward, i.primer_reverse] for i in session['plcstrn'].parts]):
-        oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0'+str(positions)))
+        oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0' + str(positions)))
         csv += session['oligo_prefix']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
         collapsed_index += 1
+    
+    ## Annotate primers in PTG sequence
+    for c,part in enumerate(session['plcstrn'].parts):
+    
+        if c == 0:
+            session['plcstrn'].features.append(SeqFeature(FeatureLocation(len(session['enzm_site'][0]), len(part.primer_forward), strand=1), type=oligo_ids[0]))
+            
+            strt = session['plcstrn'].sequence.find(reverse_complement(part.primer_reverse[len(session['enzm_site'][1]):]).lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_reverse[len(session['enzm_site'][1]):])
+            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=-1), type=oligo_ids[2*c+1]))
+            
+        elif c == len(session['plcstrn'].parts) - 1:
+            strt = session['plcstrn'].sequence.find(part.primer_forward[len(session['enzm_site'][0]):].lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_forward[len(session['enzm_site'][0]):])
+            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=1), type=oligo_ids[2*c]))
+            
+            session['plcstrn'].features.append(SeqFeature(FeatureLocation(len(session['plcstrn'].sequence)-len(part.primer_reverse), len(session['plcstrn'].sequence)-len(session['enzm_site'][1]), strand=-1), type=oligo_ids[-1]))
+        
+        else:
+	    # Find forward primer
+            strt = session['plcstrn'].sequence.find(part.primer_forward[len(session['enzm_site'][0]):].lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_forward[len(session['enzm_site'][0]):])
+            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=1), type=oligo_ids[2*c]))
+	
+            # Find reverse primer
+            strt = session['plcstrn'].sequence.find(reverse_complement(part.primer_reverse[len(session['enzm_site'][1]):]).lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_reverse[len(session['enzm_site'][1]):])
+            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=-1), type=oligo_ids[2*c+1]))
+    
     
     csv += '\nTable of fragments:\n'
     csv += 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
