@@ -45,14 +45,14 @@
       <div class="form-group">
         <label for="ControlInputbb">Border linkers</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the 4 bp linkers from BsaI digestion, which should flank the polycistron in your destination plasmid."></span>
-        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="bb_linkers" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_linkers'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
     <div class="col-2">
       <div class="form-group">
         <label for="ControlInputAdd">Additional linkers</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify any additional 4 bp BsaI linkers apart from the border linkers, which exist in your destination plasmid."></span>
-        <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['add_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="ad_linkers" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['ad_linkers'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div> 
     <div class="col-2">

@@ -16,13 +16,16 @@ class TestWebApplication(unittest.TestCase):
         polygen.app.testing = True
         self.app = polygen.app.test_client()
     
-    def postPTG(self, poltype_input, enzm_input, PTG_name, oligo_prefix, oligo_index, sequence_spacers, bb_ovrhng, add_ovrhng, min_temp, max_temp, staticBorderPrimers=False, noBorderPrimers=False):
+    def postPTG(self, poltype_input, enzm_input, PTG_name, oligo_prefix, oligo_index, sequence_spacers, bb_linkers, ad_linkers, min_temp, max_temp, staticBorderPrimers=False, noBorderPrimers=False):
+        
         if staticBorderPrimers:
-            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_ovrhng=bb_ovrhng, add_ovrhng=add_ovrhng, min_temp=min_temp, max_temp=max_temp, staticBorderPrimers=staticBorderPrimers), follow_redirects=True)
+            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp, staticBorderPrimers=staticBorderPrimers), follow_redirects=True)
+        
         elif noBorderPrimers:
-            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_ovrhng=bb_ovrhng, add_ovrhng=add_ovrhng, min_temp=min_temp, max_temp=max_temp, noBorderPrimers=noBorderPrimers), follow_redirects=True)
+            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp, noBorderPrimers=noBorderPrimers), follow_redirects=True)
+        
         else: 
-            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_ovrhng=bb_ovrhng, add_ovrhng=add_ovrhng, min_temp=min_temp, max_temp=max_temp), follow_redirects=True)
+            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp), follow_redirects=True)
     
     def test_scarlessgg_test0_gRNAs_flask(self):
         self.postPTG(poltype_input='ptg', 
@@ -31,8 +34,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest0_', 
                           oligo_index='0', 
                           sequence_spacers='gRNA;aagttttaaatcaatctaaa|gRNA;gcatcagcaccttgtcgcct|gRNA;ggatgatttctggaattcgc', 
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -47,8 +50,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest1_', 
                           oligo_index='0', 
                           sequence_spacers='pegRNA;CTCGTGACCACCCTGACCCAGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCACTGCACGCAGTGGGTCAGGGTGGTCA|gRNA;AGAAGTCGTGCTGCTTCATG', 
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -63,8 +66,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest2_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;aacattcaacgctgtcggtgagt|smRNA;ctccttcacccgggcggtacc|smRNA;taagtgcttacctgtttgggcat', 
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -79,8 +82,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest3_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG', 
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -95,8 +98,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest4_', 
                           oligo_index='0', 
                           sequence_spacers='crRNA;gatggtgcttcaaatgagat|crRNA;aatggttctcttcttgatga|crRNA;gaatggttctcttcttgatg', 
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -111,8 +114,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest5_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -127,8 +130,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest6_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -143,8 +146,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest7_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -159,8 +162,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest8_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='atct', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='atct', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -175,8 +178,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest9_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='gaag;ttgt', 
-                          add_ovrhng='', 
+                          bb_linkers='gaag;ttgt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -191,8 +194,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest10_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='45', 
                           max_temp='54')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -207,8 +210,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest11_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='64', 
                           max_temp='75')
         dt = self.app.post('/primer_list', data=dict(), follow_redirects=True)
@@ -223,8 +226,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest13_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65',
                           staticBorderPrimers=True)
@@ -240,8 +243,8 @@ class TestWebApplication(unittest.TestCase):
                           oligo_prefix='oTest14_', 
                           oligo_index='0', 
                           sequence_spacers='smRNA;gctaggtgcaacaagttcaat|pegRNA;CAACTACAAGACCCGCGCCGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTGTCGCCCTCCTTCACCTCGGCGCGGGTCTTGTA|gRNA;CGATGCCCTTCAGCTCGATG',
-                          bb_ovrhng='tgcc;gttt', 
-                          add_ovrhng='', 
+                          bb_linkers='tgcc;gttt', 
+                          ad_linkers='', 
                           min_temp='55', 
                           max_temp='65',
                           noBorderPrimers=True)

@@ -1,5 +1,4 @@
-# Import all necessary packages
-
+## Import all necessary packages
 import numpy as np
 import csv
 import itertools
@@ -13,7 +12,6 @@ from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
-
 
 
 class InvalidUsage(Exception):
@@ -95,8 +93,8 @@ class Part:
     primer_forward_tm = 0
     primer_reverse_tm = 0
     
-class Polycistron:
     
+class Polycistron:
     
     def __init__(self):
         '''inits Polycistron'''
@@ -211,13 +209,13 @@ def Diff(li1, li2):
     return (list(list(set(li1)-set(li2)) + list(set(li2)-set(li1))))
     
     
-# Set template sequences tRNA and gRNA scaffold
+## Set template sequences tRNA and gRNA scaffold
 tRNA = 'aacaaagcaccagtggtctagtggtagaatagtaccctgccacggtacagacccgggttcgattcccggctggtgca'
 scaffld = 'gttttagagctagaaatagcaagttaaaataaggctagtccgttatcaacttgaaaaagtggcaccgagtcggtgc'
 DR = 'aatttctactgttgtagat'
 
 
-#Optimize the overhangs used in Golden Gate assembly
+## Optimize the overhangs used in Golden Gate assembly
 def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     '''
     Finds linkers from optimal linker sets in a provided parts list
@@ -236,7 +234,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
     for p in parts_list:
         p.sequence = p.sequence.lower()
         
-    # Write all variable sequences in same order in a new list
+    ## Write all variable sequences in same order in a new list
     oh_list = []
     if poltype_opt=='ptg':
         for x in parts_list:
@@ -252,7 +250,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
         for x in parts_list:
             oh_list.append(x.sequence[x.sequence.find(DR)+len(DR):])
     
-    # Starting in the middle of the variable sequences and moving outwards, find overhang combinations
+    ## Starting in the middle of the variable sequences and moving outwards, find overhang combinations
     for cov in range(2,max([int(np.ceil(np.true_divide(len(prt),2))) for prt in flattn(oh_list)])):
         
         cov_list = []
@@ -271,7 +269,7 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                 else:
                     cov_list.append(oh[int(np.ceil(np.true_divide(len(oh),2)))-cov:int(np.ceil(np.true_divide(len(oh),2)))+cov])
                     
-        # Find possible overhang combinations
+        ## Find possible overhang combinations
         if poltype_opt=='ptg':
             for golden_gate_overhangs in free_overhangsets:
                 seq_matches = []
@@ -321,20 +319,20 @@ def golden_gate_optimization(parts_list, free_overhangsets, poltype_opt='ptg'):
                         if overhang in cov_list[x]:
                             seq_matches[x].append(oh_list[x][:oh_list[x].find(overhang)+4])
                             
-        #Copyright (c) 2019 Scott Weisberg
+        # Copyright (c) 2019 Scott Weisberg
         combs = []
         for x in itertools.product(*seq_matches):
             combs.append(x)
         for comb in combs:
             if len([c[-4:] for c in comb]) == len(set([c[-4:] for c in comb])):
                 return comb
-    #if there are no possible combinations
+    # If there are no possible combinations
     return None
 
 
-#Copyright (c) 2019 Scott Weisberg
-# Perform scarless Golden Gate assembly computation with provided parts
-def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc','gttt'], additional_overhangs=[], poltype='ptg', enzm='bsai'):
+# Copyright (c) 2019 Scott Weisberg
+## Perform scarless Golden Gate assembly computation with provided parts
+def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_linkers=['tgcc','gttt'], ad_linkers=[], poltype='ptg', enzm='bsai'):
     '''
     Uses a list of desired parts and additional arguments to compute a corresponsing PTG. Returns a list of newly computed parts and their primers which can be used to generate the PTG.
     
@@ -344,10 +342,10 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     :type tm_range: list, optional
     :param max_ann_len: The maximal annealing length of the static part of the primer, defaults to 30
     :type max_ann_len: int, optional
-    :param bb_overlaps: Linkers of the destination plasmid flanking the final PTG, defaults to ['tgcc','gttt']
-    :type bb_overlaps: list, optional
-    :param additional_overhangs: Additional linkers in the destination plasmid, defaults to []
-    :type additional_overhangs: list, optional
+    :param bb_linkers: Linkers of the destination plasmid flanking the final PTG, defaults to ['tgcc','gttt']
+    :type bb_linkers: list, optional
+    :param ad_linkers: Additional linkers in the destination plasmid, defaults to []
+    :type ad_linkers: list, optional
     :param poltype: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
     :type poltype: str, optional
     :param enzm: Type II restriction enzyme to use for the Golden Gate assembly. Defaults to 'bsai'
@@ -357,19 +355,28 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     :rtype: list, list, str
     '''
     
+    ## Catching errors
+    for lnk in bb_linkers+ad_linkers:
+        if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
+            raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
+    
+    
+    ## Setting up variables
+    bb_linkers = [i.lower() for i in bb_linkers]
+    ad_linkers = [i.lower() for i in ad_linkers]
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bsi)
+    
+    
+    ## Initiating the polycistron object
     polycistron = Polycistron()
     # must overwrite with empty list because features list would accumulate across runs in same session through append command
     polycistron.features = [] 
     polycistron.oligos = []
-    
-    bb_overlaps = [i.lower() for i in bb_overlaps]
-    additional_overhangs = [i.lower() for i in additional_overhangs]
-    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bsi)
 
     
-    # Go through parts and write all known annotations into list   
+    ## Go through parts and write all known annotations into list   
     mmry = len(enzms[enzm][0])+4
-    polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0])
+    polycistron.sequence = enzms[enzm][0] + reverse_complement(bb_linkers[0])
     
     for part in parts_list:
         part.sequence = part.sequence.lower()
@@ -388,12 +395,12 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
         if part.type == 'crRNA':
             polycistron.features.append(SeqFeature(FeatureLocation(mmry+part.sequence.find(DR)+len(DR), mmry+len(part.sequence), strand=1), type='spacer'))
         mmry += len(part.sequence)
-    polycistron.sequence += bb_overlaps[1] + enzms[enzm][1]
+    polycistron.sequence += bb_linkers[1] + enzms[enzm][1]
 
-    # Iterate through overhang sets with increasing size until fitting one is found
+    ## Iterate through overhang sets with increasing size until fitting one is found
     gg_opt = None
     breakit = False
-    existing_overhangs = additional_overhangs+bb_overlaps
+    existing_overhangs = ad_linkers+bb_linkers
     for p in range(10,51):
         free_overhangsets = []
         for q in range(5):
@@ -409,7 +416,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
             # Only grab sets that include all existing overhangs and delete the existing from the set
             st = [x.lower() for x in temp[q]]
             if all(i in st or reverse_complement(i) in st for i in existing_overhangs):
-                free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
+                free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in ad_linkers+bb_linkers])
             else:
                 continue
         if free_overhangsets:
@@ -442,7 +449,7 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
 
                     # Only grab sets that include all linkers in the current sublist and delete the existing from the set
                     if all(i in [x.lower() for x in temp[q]] for i in sublist):
-                        free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
+                        free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in ad_linkers+bb_linkers])
                     else:
                         continue
 
@@ -463,14 +470,14 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
         raise InvalidUsage("No combination of optimal linkers possible for the provided existing linkers", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
     
     
-    #Modify sequences and design primers
+    ## Modify sequences and design primers
     if poltype=='ptg':
         for i in range(len(parts_list)):
             
             # If current part is first part, define forward primer with left backbone overlap and reverse primer ordinarily
             if i == 0:
-                parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence[:max_ann_len]
-                parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence
+                parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_linkers[0]) + parts_list[i].sequence[:max_ann_len]
+                parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_linkers[0]) + parts_list[i].sequence
                 if parts_list[i].type == 'pegRNA':
                     parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76-max_ann_len:parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])] + enzms[enzm][1])
                     parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(scaffld.lower())+76+len(gg_opt[i])-4:] + parts_list[i+1].sequence[:max_ann_len]
@@ -506,8 +513,8 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
             
         # If current part is last part, define reverse primer with right backbone overlap and forward primer ordinarily
             elif i == len(parts_list)-1:
-                parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + bb_overlaps[-1] + enzms[enzm][1])
-                parts_list[i].sequence = parts_list[i].sequence + bb_overlaps[-1] + enzms[enzm][1]
+                parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[-max_ann_len:] + bb_linkers[-1] + enzms[enzm][1])
+                parts_list[i].sequence = parts_list[i].sequence + bb_linkers[-1] + enzms[enzm][1]
             
         # If current part is not first or last part, do ordinary computation
             else:
@@ -549,8 +556,8 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
             
             # If current part is first part, define forward primer with left backbone overlap and reverse primer ordinarily
             if i == 0:
-                parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + DR
-                parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_overlaps[0]) + parts_list[i].sequence
+                parts_list[i].primer_forward = enzms[enzm][0] + reverse_complement(bb_linkers[0]) + DR
+                parts_list[i].sequence = enzms[enzm][0] + reverse_complement(bb_linkers[0]) + parts_list[i].sequence
                 
                 parts_list[i].primer_reverse = reverse_complement(parts_list[i].sequence[parts_list[i].sequence.find(DR):parts_list[i].sequence.find(gg_opt[i])+len(gg_opt[i])] + enzms[enzm][1])
                 parts_list[i+1].primer_forward = enzms[enzm][0] + parts_list[i].sequence[parts_list[i].sequence.find(gg_opt[i]) + len(gg_opt[i])-4:] + DR
@@ -559,8 +566,8 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
                     
             # If current part is last part, define reverse primer with right backbone overlap and forward primer ordinarily
             elif i == len(parts_list)-1:
-                parts_list[i].primer_reverse = reverse_complement(DR + bb_overlaps[-1] + enzms[enzm][1])
-                parts_list[i].sequence = parts_list[i].sequence + bb_overlaps[-1] + enzms[enzm][1]
+                parts_list[i].primer_reverse = reverse_complement(DR + bb_linkers[-1] + enzms[enzm][1])
+                parts_list[i].sequence = parts_list[i].sequence + bb_linkers[-1] + enzms[enzm][1]
                 
             # If current part is not first or last part, do ordinary computation
             else:
@@ -591,7 +598,8 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     
     
     if poltype == 'ca':
-        return polycistron # If CA, the primer optimization step can be skipped, since the DR is very short
+        # If CA, the primer optimization step can be skipped, since the DR is very short
+        return polycistron
 
     
     ## Optimise primer Tm    
@@ -645,8 +653,8 @@ def pegbldr(sequence, edits, mode='PE2'):
     :return: A list of lists containing for each computed guide RNA the name, type, sequence and strand specifications
     :rtype: list
     '''
-    msg = None
     
+    ## Catching errors
     if sequence == '':
         raise InvalidUsage("No sequence input", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
     elif re.search(r'^[ACGTacgt]*$', sequence) is None:
@@ -668,10 +676,15 @@ def pegbldr(sequence, edits, mode='PE2'):
         elif e[2] == 'ins' and (any([re.search(r'^[0-9]*$', n) is None for n in e[0].split(',')]) or any([re.search(r'^[ACGTacgt]*$', b) is None for b in e[1].split(',')])):
             raise InvalidUsage("Invalid specifications for edit type \'ins\'", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'edits'})
     
+    
+    ## Setting up variables
+    msg = None
     sequence = sequence.upper()
     plc_seq = sequence[:]
     plc_rev_comp = reverse_complement(plc_seq)
     
+    
+    ## Starting the main computation
     out = []
     for c,edt in enumerate(edits):
         
@@ -684,13 +697,13 @@ def pegbldr(sequence, edits, mode='PE2'):
             changes = [str(int(chng)+1) for chng in changes] # deletion stretches should include the ending index for intuitive usability
 
         
-                ## Define pegRNA for editing
-        
+        ## Define pegRNA for editing
         allInd = inds + [int(chng) for chng in changes if edt[2] == 'del']
         maxInd = max(allInd)
         minInd = min(allInd)
         
-        # Find all PAM motifs in forward and reverse strand in respective possible regions
+        
+        ## Find all PAM motifs in forward and reverse strand in respective possible regions
         pegPAMrgn_forw = seq[:minInd+6]                       # Define the region where PAM could possibly lie in forw strand
         pegPAMs_forw = re.finditer(r'(?=(.GG))', pegPAMrgn_forw) # Find all PAMs in region
         pegPAMrgn_rev = rev_comp[:len(seq)-1-maxInd+6]
@@ -700,11 +713,13 @@ def pegbldr(sequence, edits, mode='PE2'):
         pegPAMs_forw = [i.start() for i in pegPAMs_forw]
         pegPAMs_rev = [i.start() for i in pegPAMs_rev]
         
-        # Check if usable PAMs are present
+        
+        ## Check if usable PAMs are present
         if pegPAMs_forw == pegPAMs_rev == []:
             raise InvalidUsage("There are no usable PAM motifs around the edit", status_code=400, payload={'pge': 'peg_generation.html', 'box': 'sequence'})
         
-        # Check if there are PAMs in only one strand
+        
+        ## Check if there are PAMs in only one strand
         elif pegPAMs_forw == []:
             pegPAM_rev = pegPAMs_rev[np.argmin([abs(i-(len(seq)-2-max(inds))) for i in pegPAMs_rev])]
             pegPAM = pegPAM_rev
@@ -718,7 +733,8 @@ def pegbldr(sequence, edits, mode='PE2'):
             pegPAM = pegPAM_forw
             pegPAM_strand = 'f'
         
-        # If there are PAMs in both strands, choose the one closest to edit. inf is used to make sure the list is not empty but will never be chosen.
+        
+        ## If there are PAMs in both strands, choose the one closest to edit. inf is used to make sure the list is not empty but will never be chosen.
         else:
             forw_min = min([abs(i-1-inds[0]) for i in pegPAMs_forw] + [np.inf])
             rev_min = min([abs(i-(len(seq)-2-inds[-1])) for i in pegPAMs_rev] + [np.inf])
@@ -733,7 +749,7 @@ def pegbldr(sequence, edits, mode='PE2'):
                 seq = rev_comp[:]
                 rev_comp = sequence[:]
                 if edt[2] == 'mut':
-                    inds = [len(seq)-i-1 for i in inds]              # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
+                    inds = [len(seq)-i-1 for i in inds] # Recalculate mutation indices for rev strand. -1 because len(x) == ind(x[-1])+1
                     changes = [complement(i) for i in changes]
                 elif edt[2] == 'ins':
                     inds = [len(seq)-i for i in inds]
@@ -754,10 +770,10 @@ def pegbldr(sequence, edits, mode='PE2'):
         PBS = reverse_complement(seq[pegPAM-16:pegPAM-3]) # PBS must be in opposite direction
 
         
-        # Calculate RT templates depending on type of edit
+        ## Calculate RT templates depending on type of edit
         if edt[2] == 'mut':                                      # Check if edit is point mutation
             
-            pre_RT_len = max([13, max(inds)-(pegPAM-3)])          # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
+            pre_RT_len = max([13, max(inds)-(pegPAM-3)]) # Set default length of RT-template to 13 (recommended by Anzalone et al. 2019) or until edit if further
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start() # From default length find next D
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]      # Retrieve RT-template
             RT_templ = [i for i in RT_templ]
@@ -767,7 +783,7 @@ def pegbldr(sequence, edits, mode='PE2'):
                 
         elif edt[2] == 'ins':
             
-            pre_RT_len = max([13, max(inds)-(pegPAM-3)+6])        # template should have additional length 5' of insert to ensure binding
+            pre_RT_len = max([13, max(inds)-(pegPAM-3)+6]) # template should have additional length 5' of insert to ensure binding
             post_RT_len = pre_RT_len + re.search(r'[AGT]', seq[pegPAM-3+pre_RT_len:]).start()
             RT_templ = seq[pegPAM-3:pegPAM-3+post_RT_len+1]
             RT_templ = [i for i in RT_templ]
@@ -798,6 +814,7 @@ def pegbldr(sequence, edits, mode='PE2'):
         
         out.append(['pegRNA'+str(c), 'pegRNA', pegRNA, pegPAM_strand])
 
+        
         ## Define gRNA for PE3
         if mode == 'PE3':
             
@@ -816,8 +833,7 @@ def pegbldr(sequence, edits, mode='PE2'):
             gPAMrgn = reverse_complement(nuseq[pegPAM-3:])     # gRNA must bind to other strand somewhere downstream of pegPAM
             gPAMs = re.finditer(r'(?=(.GG))', gPAMrgn)     # find all PAMs in that region
             gPAMs = np.array([i.start() for i in gPAMs])
-            gPAM = gPAMs[abs(np.array(gPAMs)-(len(gPAMrgn)-44)).argmin()] # Find PAM closest to 47 nt downstream of pegPAM nick
-                                                                          # (the gRNA nick should be 50 nt downstream of pegPAM nick)
+            gPAM = gPAMs[abs(np.array(gPAMs)-(len(gPAMrgn)-44)).argmin()] # Find PAM closest to 47 nt downstream of pegPAM nick (the gRNA nick should be 50 nt downstream of pegPAM nick)
 
             gspacer = gPAMrgn[gPAM-20:gPAM]                # Define spacer
 
@@ -838,6 +854,16 @@ def PTGbldr(name, inserts, poltype='ptg'):
     :param poltype: Type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
     :type poltype: str, optional
     '''
+    
+    ## Catching errors
+    for e in inserts:
+        if len(e) != 2:
+            raise InvalidUsage("Invalid input syntax", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+        elif e[0] not in ['gRNA', 'pegRNA', 'smRNA', 'crRNA']:
+            raise InvalidUsage("Invalid RNA type", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+        elif re.search(r'^[ACGTacgt]*$', e[1]) is None:
+            raise InvalidUsage("Invalid sequence input", status_code=400, payload={'pge': 'sequence.html', 'box': 'sequence_spacers'})
+    
     
     if poltype=='ptg':
         PTG_parts = []
@@ -878,13 +904,43 @@ def PTGbldr(name, inserts, poltype='ptg'):
 
 def annotatePrimers(polycistron, oligo_prefix='o', oligo_index='0', staticBorderPrimers=False, noBorderPrimers=False, poltype='ptg', enzm='bsai', bb_linkers=['tgcc','gttt'], ad_linkers=[]):
     '''
-    Annotate the provided primers in the polycistron
+    Annotates the provided primers in the polycistron
     
-    
+    :param polycistron: Polycistron object, to which the primers should be annotated
+    :type polycistron: Polycistron object
+    :param oligo_prefix: Prefix to use for the oligos
+    :type oligo_prefix: str
+    :param oligo_index: Index from where to start the oligo numbering
+    :type oligo_index: str
+    :param staticBorderPrimers: Whether the border primers should be optimised or the static default ones for each architecture and restriction enzyme should be assigned
+    :type staticBorderPrimers: Boolean
+    :param noBorderPrimers: Whether the border primers should be omitted from the numbering and instead assigned a default name
+    :type noBorderPrimers: Boolean
+    :param poltype_opt: The type of polycistronic architecture to use. Must be one of 'ptg' or 'ca', defaults to 'ptg'
+    :type poltype_opt: str, optional
+    :param enzm: Type II restriction enzyme to use for the Golden Gate assembly. Defaults to 'bsai'
+    :type enzm: str, optional
+    :param bb_linkers: Linkers of the destination plasmid flanking the final PTG, defaults to ['tgcc','gttt']
+    :type bb_linkers: list, optional
+    :param ad_linkers: Additional linkers in the destination plasmid, defaults to []
+    :type ad_linkers: list, optional
     '''
     
+    ## Setting up variables
     enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bbsi)
+    positions = len(oligo_index)
+    collapsed_index = int(oligo_index)
     
+    
+    ## Catching errors
+    if oligo_index != '' and re.search(r'^[0-9]*$', oligo_index) is None:
+        raise InvalidUsage("Starting index must be a number in string format", status_code=400, payload={'pge': 'sequence.html', 'box': 'oligo_index'})
+    for lnk in bb_linkers+ad_linkers:
+        if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
+            raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
+    
+    
+    ## If desired, assign the default border primer sequences
     if staticBorderPrimers or noBorderPrimers:
         if poltype == 'ptg':
             polycistron.parts[0].primer_forward = enzms[enzm][0] + reverse_complement(bb_linkers[0].upper()) + 'aacaaagcaccagtggtctagtggtag'
@@ -893,9 +949,8 @@ def annotatePrimers(polycistron, oligo_prefix='o', oligo_index='0', staticBorder
             polycistron.parts[0].primer_forward = enzms[enzm][0] + reverse_complement(bb_linkers[0].upper()) + 'aatttctactgttgtagat'
             polycistron.parts[-1].primer_reverse = reverse_complement(enzms[enzm][1]) + reverse_complement(bb_linkers[1].upper()) + 'atctacaacagtagaaatt'
     
-    positions = len(oligo_index)
-    collapsed_index = int(oligo_index)
     
+    ## Write a complete list of oligo IDs and sequences to the oligos property of the polycistron object
     primerList = flattn([[i.primer_forward, i.primer_reverse] for i in polycistron.parts])
     for c,primer in enumerate(primerList):
         if noBorderPrimers and c == 0:

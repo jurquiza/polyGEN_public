@@ -16,8 +16,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -48,8 +48,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -80,8 +80,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -112,8 +112,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -144,8 +144,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ca',
                 'enzm': 'bsai'}
         result = {}
@@ -176,8 +176,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsmbi'}
         result = {}
@@ -208,8 +208,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'btgzi'}
         result = {}
@@ -240,8 +240,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bbsi'}
         result = {}
@@ -272,8 +272,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc', 'gttt'],
-                'additional_overhangs': ['atct'],
+                'bb_linkers': ['tgcc', 'gttt'],
+                'ad_linkers': ['atct'],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -304,8 +304,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 30,
-                'bb_overlaps': ['gaag','ttgt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['gaag','ttgt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -336,8 +336,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [45, 54],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc','gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc','gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -368,8 +368,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [64, 75],
                 'max_ann_len': 30,
-                'bb_overlaps': ['tgcc','gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc','gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
@@ -400,8 +400,8 @@ class TestScarlessGG(unittest.TestCase):
         args = {'parts_list': inpt, 
                 'tm_range': [55, 65],
                 'max_ann_len': 25,
-                'bb_overlaps': ['tgcc','gttt'],
-                'additional_overhangs': [],
+                'bb_linkers': ['tgcc','gttt'],
+                'ad_linkers': [],
                 'poltype': 'ptg',
                 'enzm': 'bsai'}
         result = {}
