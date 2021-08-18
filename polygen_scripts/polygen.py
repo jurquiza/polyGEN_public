@@ -26,13 +26,13 @@ def learn():
 def sequence():
     session['clr'] = {'sequence_spacers': '#FFFFFF', 'link': '#FFFFFF', 'poltype_input': '#FFFFFF', 'oligo_index': '#FFFFFF', 'PTG_name': '#FFFFFF'}
     session['enzm_site'] = ['gaggtctcg', 'cgagacctc']
-    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bpii': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bpii)
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bbsi)
     
     if request.method == "POST":
         if request.form['submit_button'] == 'submit':
             session['msg'] = None
             args = {}
-            args['poltype'] = session['poltype'] = request.form["poltype_input"]
+            session['poltype'] = args['poltype'] = request.form["poltype_input"]
             args['enzm'] = session['enzm'] = request.form['enzm_input']
             session['enzm_site'] = enzms[request.form['enzm_input']]
             session['PTG_name'] = request.form["PTG_name"]
@@ -41,7 +41,7 @@ def sequence():
             session['PTG_transfer'] = request.form["sequence_spacers"]
             session['bb_ovrhng'] = request.form["bb_ovrhng"]
             session['add_ovrhng'] = request.form["add_ovrhng"]
-            session['borderPrimers'] = request.form.get('borderPrimers') if request.form.get('borderPrimers') else False
+            session['staticBorderPrimers'] = request.form.get('staticBorderPrimers') if request.form.get('staticBorderPrimers') else False
             session['noBorderPrimers'] = request.form.get('noBorderPrimers') if request.form.get('noBorderPrimers') else False
         
             args['tm_range'] = session['tm_range'] = [int(request.form["min_temp"][:2]), int(request.form["max_temp"][:2])]
@@ -49,12 +49,8 @@ def sequence():
             args['additional_overhangs'] = []
             if session['bb_ovrhng']:
                 args['bb_overlaps'] = session["bb_ovrhng"].split(';')
-            else:
-                session['bb_ovrhng'] = ['tgcc', 'gttt']
             if session['add_ovrhng']:
                 args['additional_overhangs'] = session["add_ovrhng"].split(';')
-            else: 
-                session['add_ovrhng'] = []
             
             if '/' in session['PTG_name']:
                 raise InvalidUsage("Polycistron name may not contain a '/'", status_code=400, payload={'pge': 'sequence.html', 'box': 'PTG_name'})
@@ -79,28 +75,31 @@ def sequence():
             for lnk in args['bb_overlaps']+args['additional_overhangs']:
                 if len(lnk) != 4 or re.search(r'^[ACGTacgt]*$', lnk) is None:
                     raise InvalidUsage("Invalid linker input", status_code=400, payload={'pge': 'sequence.html', 'box': 'link'})
+                    
             
-            PTG = PTGbldr(session['PTG_name'], PTG_structure, args['poltype'])
+            PTG = PTGbldr(session['PTG_name'], PTG_structure, session['poltype'])
             
-            session['plcstrn'] = scarless_gg(PTG, **args)
+            polycistron = scarless_gg(PTG, **args)
             
-            if session['plcstrn'].warning:
-                session['msg'] = session['plcstrn'].warning
-        
             if not session['PTG_name']:
                 session['PTG_name'] = request.form['poltype_input'].upper()
             if not session['oligo_prefix']:
                 session['oligo_prefix'] = 'o'
             if not session['oligo_index']:
                 session['oligo_index'] = '0'
+            primerArgs = {'oligo_prefix': session['oligo_prefix'], 
+                          'oligo_index': session['oligo_index'], 
+                          'staticBorderPrimers': session['staticBorderPrimers'],
+                          'noBorderPrimers': session['noBorderPrimers'], 
+                          'poltype': session['poltype'], 
+                          'enzm': session['enzm'],
+                          'bb_linkers': args['bb_overlaps'],
+                          'ad_linkers': args['additional_overhangs']}
+            session['plcstrn'] = annotatePrimers(polycistron, **primerArgs)
             
-            if session['borderPrimers'] or session['noBorderPrimers']:
-                if args['poltype'] == 'ptg':
-                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aacaaagcaccagtggtctagtggtag'
-                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'tgcaccagccgggaatcgaac'
-                if args['poltype'] == 'ca':
-                    session['plcstrn'].parts[0].primer_forward = session['enzm_site'][0] + reverse_complement(args['bb_overlaps'][0].upper()) + 'aatttctactgttgtagat'
-                    session['plcstrn'].parts[-1].primer_reverse = reverse_complement(session['enzm_site'][1]) + reverse_complement(args['bb_overlaps'][1].upper()) + 'atctacaacagtagaaatt'
+            if session['plcstrn'].warning:
+                session['msg'] = session['plcstrn'].warning
+        
             
             return render_template("primer_list.html", session=session)
             
@@ -139,6 +138,7 @@ def peg_generation():
         return redirect(url_for('sequence'))
         
     else:
+        
         return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)
       
         
@@ -146,75 +146,32 @@ def peg_generation():
 def serve_primers():
     csv = 'List of oligos:\n'
     csv += 'oligo_ID,sequence\n'
-    positions = len(session['oligo_index'])
-    collapsed_index = int(session['oligo_index'])
-    oligo_ids = []
-    
-    primerList = flattn([[i.primer_forward, i.primer_reverse] for i in session['plcstrn'].parts])
-    for c,primer in enumerate(primerList):
-        if session['noBorderPrimers'] and c == 0:
-            oligo_ids.append('default_' + session['poltype'] + '_' + session['enzm'] + '_fw')
-            csv += 'default_' + session['poltype'] + '_' + session['enzm'] + '_fw,' + primer + '\n'
-        elif session['noBorderPrimers'] and c == len(primerList) - 1:
-            oligo_ids.append('default_' + session['poltype'] + '_' + session['enzm'] + '_rv')
-            csv += 'default_' + session['poltype'] + '_' + session['enzm'] + '_rv,' + primer + '\n'
-        else:
-            oligo_ids.append(session['oligo_prefix']+format(collapsed_index,'0' + str(positions)))
-            csv += session['oligo_prefix']+format(collapsed_index,'0'+str(positions))+','+primer+'\n'
-            collapsed_index += 1
-    
-    
-    ## Annotate primers in PTG sequence
-    for c,part in enumerate(session['plcstrn'].parts):
-    
-        if c == 0:
-            session['plcstrn'].features.append(SeqFeature(FeatureLocation(len(session['enzm_site'][0]), len(part.primer_forward), strand=1), type=oligo_ids[0]))
-            
-            strt = session['plcstrn'].sequence.find(reverse_complement(part.primer_reverse[len(session['enzm_site'][1]):]).lower(), part.localisation[0], part.localisation[1])
-            end = strt + len(part.primer_reverse[len(session['enzm_site'][1]):])
-            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=-1), type=oligo_ids[2*c+1]))
-            
-        elif c == len(session['plcstrn'].parts) - 1:
-            strt = session['plcstrn'].sequence.find(part.primer_forward[len(session['enzm_site'][0]):].lower(), part.localisation[0], part.localisation[1])
-            end = strt + len(part.primer_forward[len(session['enzm_site'][0]):])
-            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=1), type=oligo_ids[2*c]))
-            
-            session['plcstrn'].features.append(SeqFeature(FeatureLocation(len(session['plcstrn'].sequence)-len(part.primer_reverse), len(session['plcstrn'].sequence)-len(session['enzm_site'][1]), strand=-1), type=oligo_ids[-1]))
+    for oligo in session['plcstrn'].oligos:
+        csv += oligo[0] + ',' + oligo[1] + '\n'
         
-        else:
-	    # Find forward primer
-            strt = session['plcstrn'].sequence.find(part.primer_forward[len(session['enzm_site'][0]):].lower(), part.localisation[0], part.localisation[1])
-            end = strt + len(part.primer_forward[len(session['enzm_site'][0]):])
-            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=1), type=oligo_ids[2*c]))
-	
-            # Find reverse primer
-            strt = session['plcstrn'].sequence.find(reverse_complement(part.primer_reverse[len(session['enzm_site'][1]):]).lower(), part.localisation[0], part.localisation[1])
-            end = strt + len(part.primer_reverse[len(session['enzm_site'][1]):])
-            session['plcstrn'].features.append(SeqFeature(FeatureLocation(strt, end, strand=-1), type=oligo_ids[2*c+1]))
-    
-    
     ## Append the fragment table to the csv file
     csv += '\nTable of fragments:\n'
     csv += 'fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev\n'
     for c,fragment in enumerate(session['plcstrn'].parts):
-        csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+oligo_ids[c*2]+','+str(np.round(fragment.primer_forward_tm,1))+','+oligo_ids[c*2+1]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
+        csv += session['PTG_name']+'_f'+str(c)+','+fragment.type+','+session['plcstrn'].oligos[c*2][0]+','+str(np.round(fragment.primer_forward_tm,1))+','+session['plcstrn'].oligos[c*2+1][0]+','+str(np.round(fragment.primer_reverse_tm, 1))+'\n'
     
     ## Append the input parameters to the csv file
     csv += '\nInput parameters:\n'
     csv += 'Polycistron name:,' + session['PTG_name'] + '\n'
     csv += 'Oligos prefix:,' + session['oligo_prefix'] + '\n'
     csv += 'Starting index:,' + session['oligo_index'] + '\n'
-    csv += 'Border linkers:,' + '+'.join(session['bb_ovrhng']) + '\n'
-    csv += 'Addidional linkers:,' + '+'.join(session['add_ovrhng']) + '\n'
+    csv += 'Border linkers:,' + '+'.join(session['bb_ovrhng'] if session['bb_ovrhng'] else ['tgcc', 'gttt']) + '\n'
+    csv += 'Addidional linkers:,' + '+'.join(session['add_ovrhng'] if session['add_ovrhng'] else []) + '\n'
     csv += 'Type of Polycistron:,' + session['poltype'] + '\n'
     csv += 'Restriction enzyme:,' + session['enzm'] + '\n'
     csv += 'Melting temperature range:,' + str(session['tm_range'][0]) + '-' + str(session['tm_range'][1]) + '\n'
-    csv += 'Invariable border primers:,' + str(session['borderPrimers']) + '\n'
+    csv += 'Invariable border primers:,' + str(session['staticBorderPrimers']) + '\n'
     csv += 'Omit border primers:,' + str(session['noBorderPrimers']) + '\n'
     
     sr = SeqRecord(seq=Seq(session['plcstrn'].sequence, alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
     for ftr in session['plcstrn'].features:
         sr.features.append(ftr)
+        
     gb_json = {}
     gb_json['polycistron'] = polyToJson(session['plcstrn'])
     gb_json['msg'] = session['msg']

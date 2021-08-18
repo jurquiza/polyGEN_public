@@ -73,13 +73,13 @@
           <option value="bsai">BsaI </option>
           <option value="bsmbi">BsmBI</option>
           <option value="btgzi">BtgZI</option>
-          <option value="bpii">BpiI</option>
+          <option value="bbsi">BbsI</option>
         </select>
       </div>
     </div>
     <script>
       function update() {
-        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bpii': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
+        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
         
         var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN'
         
@@ -140,12 +140,12 @@
       <div class="row">
         <div class="col-6">
           <div class="form-group">
-            <label for="borderPrimers">Invariable border primers</label>
+            <label for="staticBorderPrimers">Invariable border primers</label>
             <span class="fa fa-info-circle" data-toggle='tooltip' title="Should the forward primer of the first fragment and reverse primer of the last fragment be set to an unchanging default? When performing multiple PTG experiments, these primers could then be reused between experiments."></span>
           </div>
         </div>
         <div class="col-6">
-          <input type="checkbox" name="borderPrimers" id="borderPrimers" value=True>
+          <input type="checkbox" name="staticBorderPrimers" id="staticBorderPrimers" value=True>
         </div>
       </div>
       <div class="row">

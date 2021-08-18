@@ -1,0 +1,32 @@
+List of oligos:
+oligo_ID,sequence
+default_ptg_bsai_fw,gaggtctcgGGCAaacaaagcaccagtggtctagtggtag
+oTest14_0,gaggtctcgGCACctagctgcaccagccgggaatcg
+oTest14_1,gaggtctcgGTGCaacaagttcaataacaaagcaccagtggtctagt
+oTest14_2,gaggtctcgCGGCgcgggtcttgtagttgtgcaccagccgggaatcg
+oTest14_3,gaggtctcgGCCGgttttagagctagaaatagcaagttaa
+oTest14_4,gaggtctcgCCCGcgccgaggtgaaggagggcgacagcaccgactcggtgccactt
+oTest14_5,gaggtctcgCGGGtcttgtaaacaaagcaccagtggtctagt
+oTest14_6,gaggtctcgATCGtgcaccagccgggaatcg
+oTest14_7,gaggtctcgCGATgcccttcagctcgatggttttagagctagaaatagcaagttaa
+default_ptg_bsai_rv,gaggtctcgAAACtgcaccagccgggaatcgaac
+
+Table of fragments:
+fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev
+test14_noBorderPrimers_f0,tRNA,default_ptg_bsai_fw,55.9,oTest14_0,59.5
+test14_noBorderPrimers_f1,smRNA,oTest14_1,55.9,oTest14_2,59.5
+test14_noBorderPrimers_f2,pegRNA,oTest14_3,52.0,oTest14_4,61.8
+test14_noBorderPrimers_f3,tRNA,oTest14_5,55.9,oTest14_6,59.5
+test14_noBorderPrimers_f4,gRNA,oTest14_7,52.0,default_ptg_bsai_rv,59.5
+
+Input parameters:
+Polycistron name:,test14_noBorderPrimers
+Oligos prefix:,oTest14_
+Starting index:,0
+Border linkers:,tgcc+gttt
+Addidional linkers:,
+Type of Polycistron:,ptg
+Restriction enzyme:,bsai
+Melting temperature range:,55-65
+Invariable border primers:,False
+Omit border primers:,True

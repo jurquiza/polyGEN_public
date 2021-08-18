@@ -1,0 +1,29 @@
+LOCUS       test4_ca                 162 bp    DNA     linear   UNK 17-AUG-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     crRNA           14..52
+     spacer          33..52
+     crRNA           53..91
+     spacer          72..91
+     crRNA           92..130
+     spacer          111..130
+     DR              131..149
+     oTest4_0        10..32
+     oTest4_1        complement(14..50)
+     oTest4_2        47..71
+     oTest4_3        complement(53..89)
+     oTest4_4        86..110
+     oTest4_5        complement(92..123)
+     oTest4_6        120..149
+     oTest4_7        complement(131..153)
+ORIGIN
+        1 gaggtctcgg gcaaatttct actgttgtag atgatggtgc ttcaaatgag ataatttcta
+       61 ctgttgtaga taatggttct cttcttgatg aaatttctac tgttgtagat gaatggttct
+      121 cttcttgatg aatttctact gttgtagatg tttcgagacc tc
+//

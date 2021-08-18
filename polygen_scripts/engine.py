@@ -103,6 +103,7 @@ class Polycistron:
     
     sequence = ''
     parts = []
+    oligos = []
     features = []
     warning = None
 
@@ -120,6 +121,7 @@ def polyToJson(poly):
     return {
         "sequence": p.sequence,
         "parts": [p.to_json() for p in p.parts],
+        "oligos": p.oligos,
         "features": ftrs,
         "warning": p.warning
     }
@@ -356,11 +358,13 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
     '''
     
     polycistron = Polycistron()
-    polycistron.features = [] # must overwrite with empty list because features list would accumulate across runs in same session through append command
+    # must overwrite with empty list because features list would accumulate across runs in same session through append command
+    polycistron.features = [] 
+    polycistron.oligos = []
     
     bb_overlaps = [i.lower() for i in bb_overlaps]
     additional_overhangs = [i.lower() for i in additional_overhangs]
-    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bpii': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bpii)
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bsi)
 
     
     # Go through parts and write all known annotations into list   
@@ -408,7 +412,6 @@ def scarless_gg(parts_list, tm_range=[55,65], max_ann_len=30, bb_overlaps=['tgcc
                 free_overhangsets.append([i for i in [x.lower() for x in temp[q]] if i not in additional_overhangs+bb_overlaps])
             else:
                 continue
-           
         if free_overhangsets:
             gg_opt = golden_gate_optimization(parts_list, free_overhangsets, poltype)
         if gg_opt is not None:
@@ -871,3 +874,65 @@ def PTGbldr(name, inserts, poltype='ptg'):
         CA_parts.append(Part(name+'_'+str(c), 'DR', DR))
             
         return CA_parts
+        
+
+def annotatePrimers(polycistron, oligo_prefix='o', oligo_index='0', staticBorderPrimers=False, noBorderPrimers=False, poltype='ptg', enzm='bsai', bb_linkers=['tgcc','gttt'], ad_linkers=[]):
+    '''
+    Annotate the provided primers in the polycistron
+    
+    
+    '''
+    
+    enzms={'bsai': ['gaggtctcg', 'cgagacctc'], 'bsmbi': ['tgcgtctca', 'tgagacgca'], 'btgzi': ['ctgcgatggagtatgtta', 'taacatactccatcgcag'], 'bbsi': ['ttgaagactt', 'aagtcttcaa']} #templates found in pUU080 (bsai), pUPD2 (bsmbi), Ortega-Escalante et al. 2018 (btgzi), Kun (bbsi)
+    
+    if staticBorderPrimers or noBorderPrimers:
+        if poltype == 'ptg':
+            polycistron.parts[0].primer_forward = enzms[enzm][0] + reverse_complement(bb_linkers[0].upper()) + 'aacaaagcaccagtggtctagtggtag'
+            polycistron.parts[-1].primer_reverse = reverse_complement(enzms[enzm][1]) + reverse_complement(bb_linkers[1].upper()) + 'tgcaccagccgggaatcgaac'
+        if poltype == 'ca':
+            polycistron.parts[0].primer_forward = enzms[enzm][0] + reverse_complement(bb_linkers[0].upper()) + 'aatttctactgttgtagat'
+            polycistron.parts[-1].primer_reverse = reverse_complement(enzms[enzm][1]) + reverse_complement(bb_linkers[1].upper()) + 'atctacaacagtagaaatt'
+    
+    positions = len(oligo_index)
+    collapsed_index = int(oligo_index)
+    
+    primerList = flattn([[i.primer_forward, i.primer_reverse] for i in polycistron.parts])
+    for c,primer in enumerate(primerList):
+        if noBorderPrimers and c == 0:
+            polycistron.oligos.append(['default_' + poltype + '_' + enzm + '_fw', primer])
+        elif noBorderPrimers and c == len(primerList) - 1:
+            polycistron.oligos.append(['default_' + poltype + '_' + enzm + '_rv', primer])
+        else:
+            polycistron.oligos.append([oligo_prefix+format(collapsed_index,'0' + str(positions)), primer])
+            collapsed_index += 1
+    
+    
+    ## Annotate primers in PTG sequence
+    for c,part in enumerate(polycistron.parts):
+    
+        if c == 0:
+            polycistron.features.append(SeqFeature(FeatureLocation(len(enzms[enzm][0]), len(part.primer_forward), strand=1), type=polycistron.oligos[0][0]))
+            
+            strt = polycistron.sequence.find(reverse_complement(part.primer_reverse[len(enzms[enzm][1]):]).lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_reverse[len(enzms[enzm][1]):])
+            polycistron.features.append(SeqFeature(FeatureLocation(strt, end, strand=-1), type=polycistron.oligos[2*c+1][0]))
+            
+        elif c == len(polycistron.parts) - 1:
+            strt = polycistron.sequence.find(part.primer_forward[len(enzms[enzm][0]):].lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_forward[len(enzms[enzm][0]):])
+            polycistron.features.append(SeqFeature(FeatureLocation(strt, end, strand=1), type=polycistron.oligos[2*c][0]))
+            
+            polycistron.features.append(SeqFeature(FeatureLocation(len(polycistron.sequence)-len(part.primer_reverse), len(polycistron.sequence)-len(enzms[enzm][1]), strand=-1), type=polycistron.oligos[-1][0]))
+        
+        else:
+	    # Find forward primer
+            strt = polycistron.sequence.find(part.primer_forward[len(enzms[enzm][0]):].lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_forward[len(enzms[enzm][0]):])
+            polycistron.features.append(SeqFeature(FeatureLocation(strt, end, strand=1), type=polycistron.oligos[2*c][0]))
+	
+            # Find reverse primer
+            strt = polycistron.sequence.find(reverse_complement(part.primer_reverse[len(enzms[enzm][1]):]).lower(), part.localisation[0], part.localisation[1])
+            end = strt + len(part.primer_reverse[len(enzms[enzm][1]):])
+            polycistron.features.append(SeqFeature(FeatureLocation(strt, end, strand=-1), type=polycistron.oligos[2*c+1][0]))
+    
+    return polycistron
