@@ -1,0 +1,32 @@
+List of oligos:
+oligo_ID,sequence
+oTest9_0,gaggtctcgCTTCaacaaagcaccagtggtctagt
+oTest9_1,gaggtctcgCACCtagctgcaccagccgggaatcg
+oTest9_2,gaggtctcgGGTGcaacaagttcaataacaaagcaccagtggtctagt
+oTest9_3,gaggtctcgCGGCgcgggtcttgtagttgtgcaccagccgggaatcg
+oTest9_4,gaggtctcgGCCGgttttagagctagaaatagcaagttaa
+oTest9_5,gaggtctcgCCCGcgccgaggtgaaggagggcgacagcaccgactcggtgccactt
+oTest9_6,gaggtctcgCGGGtcttgtaaacaaagcaccagtggtctagt
+oTest9_7,gaggtctcgATCGtgcaccagccgggaatcg
+oTest9_8,gaggtctcgCGATgcccttcagctcgatggttttagagctagaaatagcaagttaa
+oTest9_9,gaggtctcgACAAtgcaccagccgggaatcg
+
+Table of fragments:
+fragment_id,fragment_type,forward_primer,Tm_forw,reverse_primer,Tm_rev
+test9_borderLinkers_f0,tRNA,oTest9_0,55.9,oTest9_1,59.5
+test9_borderLinkers_f1,smRNA,oTest9_2,55.9,oTest9_3,59.5
+test9_borderLinkers_f2,pegRNA,oTest9_4,52.0,oTest9_5,61.8
+test9_borderLinkers_f3,tRNA,oTest9_6,55.9,oTest9_7,59.5
+test9_borderLinkers_f4,gRNA,oTest9_8,52.0,oTest9_9,59.5
+
+Input parameters:
+Polycistron name:,test9_borderLinkers
+Oligos prefix:,oTest9_
+Starting index:,0
+Border linkers:,g+a+a+g+;+t+t+g+t
+Addidional linkers:,
+Type of Polycistron:,ptg
+Restriction enzyme:,bsai
+Melting temperature range:,55-65
+Invariable border primers:,False
+Omit border primers:,False

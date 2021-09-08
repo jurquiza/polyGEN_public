@@ -45,14 +45,14 @@
       <div class="form-group">
         <label for="ControlInputbb">Border linkers</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the 4 bp linkers from BsaI digestion, which should flank the polycistron in your destination plasmid."></span>
-        <input type="text" name="bb_ovrhng" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="bb_linkers" class="form-control" id="ControlInputbb" placeholder="tgcc;gttt" value="{{ session['bb_linkers'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div>
     <div class="col-2">
       <div class="form-group">
         <label for="ControlInputAdd">Additional linkers</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify any additional 4 bp BsaI linkers apart from the border linkers, which exist in your destination plasmid."></span>
-        <input type="text" name="add_ovrhng" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['add_ovrhng'] }}" style="background-color:{{ session['clr']['link'] }}">
+        <input type="text" name="ad_linkers" class="form-control" id="ControlInputAdd" placeholder="None" value="{{ session['ad_linkers'] }}" style="background-color:{{ session['clr']['link'] }}">
       </div>
     </div> 
     <div class="col-2">
@@ -73,13 +73,13 @@
           <option value="bsai">BsaI </option>
           <option value="bsmbi">BsmBI</option>
           <option value="btgzi">BtgZI</option>
-          <option value="bpii">BpiI</option>
+          <option value="bbsi">BbsI</option>
         </select>
       </div>
     </div>
     <script>
       function update() {
-        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bpii': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
+        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
         
         var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN'
         
@@ -140,12 +140,23 @@
       <div class="row">
         <div class="col-6">
           <div class="form-group">
-            <label for="borderPrimers">Invariable border primers</label>
+            <label for="staticBorderPrimers">Static border primers</label>
             <span class="fa fa-info-circle" data-toggle='tooltip' title="Should the forward primer of the first fragment and reverse primer of the last fragment be set to an unchanging default? When performing multiple PTG experiments, these primers could then be reused between experiments."></span>
           </div>
         </div>
         <div class="col-6">
-          <input type="checkbox" name="borderPrimers" id="borderPrimers" value=True>
+          <input type="checkbox" name="staticBorderPrimers" id="staticBorderPrimers" value=True>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label for="noBorderPrimers">Omit border primers</label>
+            <span class="fa fa-info-circle" data-toggle='tooltip' title="Should the forward primer of the first fragment and reverse primer of the last fragment be omitted? The primers will then be listed in the csv file and annotated in the gb file as 'default_<architecture>_<enzyme>_fw' and 'default_<architecture>_<enzyme>_rv'."></span>
+          </div>
+        </div>
+        <div class="col-6">
+          <input type="checkbox" name="noBorderPrimers" id="noBorderPrimers" value=True>
         </div>
       </div>
     </div>
@@ -158,6 +169,10 @@
       <div class="form-group">
         <label for="ControlTextarea1">Polycistron description (required)</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the contents of your polycistron here. The individual parts you specify will be concatenated according to the chosen polycistronic architecture. You may use gRNAs, pegRNAs or arbitrary small RNAs (abbreviated smRNA). First, state the type of RNA, followed by a semicolon and then state the corresponding sequence. Separate several parts by a vertical line. For smRNAs and pegRNAs, provide the entire sequence. For gRNAs, only provide the spacer."></span>
+        <p style="font-family: monospace; color: grey">
+        Positive example: gRNA;ATAGGCTCCGATCGTGAACC|gRNA;GGAATTTGGCGAGGCCTATT|smRNA;CGTATGGCGTATCGGATTCTAT<br>
+        Negative example: smRNA;TTGAAGTAAATACAAACAGG|gRNA;TTGTATCAAAAATGCAAGCT|gRNA;TTTTAGTAACAATAAGAGAG
+        </p>
         {% if session['PTG_transfer'] %}
             <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC' style="background-color:{{ session['clr']['sequence_spacers'] }}">{{ session['PTG_transfer'] }}</textarea>
         {% else %}

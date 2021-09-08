@@ -1,0 +1,40 @@
+LOCUS       test0_gRNAs              622 bp    DNA     linear   UNK 17-AUG-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            14..90
+     gRNA            91..263
+     spacer          91..110
+     tRNA            187..263
+     gRNA            264..436
+     spacer          264..283
+     tRNA            360..436
+     gRNA            437..609
+     spacer          437..456
+     tRNA            533..609
+     oTest0_0        10..35
+     oTest0_1        complement(73..95)
+     oTest0_2        92..137
+     oTest0_3        complement(246..279)
+     oTest0_4        276..310
+     oTest0_5        complement(419..447)
+     oTest0_6        444..483
+     oTest0_7        complement(592..613)
+ORIGIN
+        1 gaggtctcgg gcaaacaaag caccagtggt ctagtggtag aatagtaccc tgccacggta
+       61 cagacccggg ttcgattccc ggctggtgca aagttttaaa tcaatctaaa gttttagagc
+      121 tagaaatagc aagttaaaat aaggctagtc cgttatcaac ttgaaaaagt ggcaccgagt
+      181 cggtgcaaca aagcaccagt ggtctagtgg tagaatagta ccctgccacg gtacagaccc
+      241 gggttcgatt cccggctggt gcagcatcag caccttgtcg cctgttttag agctagaaat
+      301 agcaagttaa aataaggcta gtccgttatc aacttgaaaa agtggcaccg agtcggtgca
+      361 acaaagcacc agtggtctag tggtagaata gtaccctgcc acggtacaga cccgggttcg
+      421 attcccggct ggtgcaggat gatttctgga attcgcgttt tagagctaga aatagcaagt
+      481 taaaataagg ctagtccgtt atcaacttga aaaagtggca ccgagtcggt gcaacaaagc
+      541 accagtggtc tagtggtaga atagtaccct gccacggtac agacccgggt tcgattcccg
+      601 gctggtgcag tttcgagacc tc
+//

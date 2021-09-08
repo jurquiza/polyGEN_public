@@ -1,0 +1,40 @@
+We have been performing the experimental procedure as follows:
+
+
+1. Produce polycistron fragments by PCR
+  Per reaction, mix
+    - 1 µl template plasmid (10 ng/µl)
+    - 10 µl 5x Q5 buffer
+    - 0.5 µl Q5 polymerase
+    - 1 µl dNTPs (10 mM)
+    - 2.5 µl forward primer (10 µM)
+    - 2.5 µl reverse primer (10 µM)
+    - 1 µl DMSO
+    - 31.5 µl H2O
+    
+  Everything except the primers may be pooled in a MasterMix. 
+  The primers should be paired according to the table in oligos.csv.
+  
+  Program thermocycler as follows:
+  98 °C 	30 s
+  98 °C	5 s
+  55 °C	20 s
+  72 °C	15 s
+  72 °C	2 min
+  4 °C		pause
+  
+  Check for expected fragments by gel electrophoresis and purify PCR product using Macherey-Nagel NucleoSpin Gel and PCR Clean-up Kit
+  
+2. Assemble polycistron by Golden Gate
+  Perform assembly reaction according to Golden Gate (24 Fragment) Assembly protocol from New England Biolabs, using the respective chosen restriction enzyme. If the concentration of the purified fragments is already below 100 ng/µl, adjust the volumes of fragments and water accordingly. 
+  
+  Transform assembly reaction by
+    - thawing 50 µl NEB 10-beta competent E. coli on ice for 6 min
+    - adding 1 µl assembly reaction
+    - incubation on ice for 30 min
+    - heat-shocking at 42 °C for 45 s
+    - incubating on ice for 2 min
+    - adding 250 µl LB-medium
+    - incubating at 37 °C, 700 rpm for 1 h
+    - streaking out entire volume on pre-warmed antibiotic-LB-agar plates
+    - incubating overnight at 37 °C

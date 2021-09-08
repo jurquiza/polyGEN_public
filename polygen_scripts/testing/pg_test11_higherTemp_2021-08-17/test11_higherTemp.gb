@@ -1,0 +1,43 @@
+LOCUS       test11_higherTemp        581 bp    DNA     linear   UNK 17-AUG-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            14..90
+     smRNA           91..188
+     smRNA           91..111
+     tRNA            112..188
+     pegRNA          189..318
+     spacer          189..208
+     RT_template     285..305
+     PBS             306..318
+     tRNA            319..395
+     gRNA            396..568
+     spacer          396..415
+     tRNA            492..568
+     oTest11_0       10..43
+     oTest11_1       complement(71..99)
+     oTest11_2       96..141
+     oTest11_3       complement(169..208)
+     oTest11_4       205..235
+     oTest11_5       complement(258..311)
+     oTest11_6       308..348
+     oTest11_7       complement(376..399)
+     oTest11_8       396..442
+     oTest11_9       complement(549..572)
+ORIGIN
+        1 gaggtctcgg gcaaacaaag caccagtggt ctagtggtag aatagtaccc tgccacggta
+       61 cagacccggg ttcgattccc ggctggtgca gctaggtgca acaagttcaa taacaaagca
+      121 ccagtggtct agtggtagaa tagtaccctg ccacggtaca gacccgggtt cgattcccgg
+      181 ctggtgcaca actacaagac ccgcgccggt tttagagcta gaaatagcaa gttaaaataa
+      241 ggctagtccg ttatcaactt gaaaaagtgg caccgagtcg gtgctgtcgc cctccttcac
+      301 ctcggcgcgg gtcttgtaaa caaagcacca gtggtctagt ggtagaatag taccctgcca
+      361 cggtacagac ccgggttcga ttcccggctg gtgcacgatg cccttcagct cgatggtttt
+      421 agagctagaa atagcaagtt aaaataaggc tagtccgtta tcaacttgaa aaagtggcac
+      481 cgagtcggtg caacaaagca ccagtggtct agtggtagaa tagtaccctg ccacggtaca
+      541 gacccgggtt cgattcccgg ctggtgcagt ttcgagacct c
+//

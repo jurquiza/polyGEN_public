@@ -1,0 +1,36 @@
+LOCUS       test2_smRNAs             401 bp    DNA     linear   UNK 17-AUG-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            14..90
+     smRNA           91..190
+     smRNA           91..113
+     tRNA            114..190
+     smRNA           191..288
+     smRNA           191..211
+     tRNA            212..288
+     smRNA           289..388
+     smRNA           289..311
+     tRNA            312..388
+     oTest2_0        10..35
+     oTest2_1        complement(73..103)
+     oTest2_2        100..135
+     oTest2_3        complement(173..206)
+     oTest2_4        203..233
+     oTest2_5        complement(271..307)
+     oTest2_6        304..333
+     oTest2_7        complement(371..392)
+ORIGIN
+        1 gaggtctcgg gcaaacaaag caccagtggt ctagtggtag aatagtaccc tgccacggta
+       61 cagacccggg ttcgattccc ggctggtgca aacattcaac gctgtcggtg agtaacaaag
+      121 caccagtggt ctagtggtag aatagtaccc tgccacggta cagacccggg ttcgattccc
+      181 ggctggtgca ctccttcacc cgggcggtac caacaaagca ccagtggtct agtggtagaa
+      241 tagtaccctg ccacggtaca gacccgggtt cgattcccgg ctggtgcata agtgcttacc
+      301 tgtttgggca taacaaagca ccagtggtct agtggtagaa tagtaccctg ccacggtaca
+      361 gacccgggtt cgattcccgg ctggtgcagt ttcgagacct c
+//

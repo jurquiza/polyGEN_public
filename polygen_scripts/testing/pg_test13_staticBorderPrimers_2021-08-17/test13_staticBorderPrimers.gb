@@ -1,0 +1,43 @@
+LOCUS       test13_staticBorderPrimers 581 bp    DNA     linear   UNK 17-AUG-2021
+DEFINITION  .
+ACCESSION   <unknown id>
+VERSION     <unknown id>
+KEYWORDS    .
+SOURCE      .
+  ORGANISM  .
+            .
+FEATURES             Location/Qualifiers
+     tRNA            14..90
+     smRNA           91..188
+     smRNA           91..111
+     tRNA            112..188
+     pegRNA          189..318
+     spacer          189..208
+     RT_template     285..305
+     PBS             306..318
+     tRNA            319..395
+     gRNA            396..568
+     spacer          396..415
+     tRNA            492..568
+     oTest13_0       10..40
+     oTest13_1       complement(73..99)
+     oTest13_2       96..133
+     oTest13_3       complement(171..208)
+     oTest13_4       205..235
+     oTest13_5       complement(265..311)
+     oTest13_6       308..340
+     oTest13_7       complement(378..399)
+     oTest13_8       396..442
+     oTest13_9       complement(548..572)
+ORIGIN
+        1 gaggtctcgg gcaaacaaag caccagtggt ctagtggtag aatagtaccc tgccacggta
+       61 cagacccggg ttcgattccc ggctggtgca gctaggtgca acaagttcaa taacaaagca
+      121 ccagtggtct agtggtagaa tagtaccctg ccacggtaca gacccgggtt cgattcccgg
+      181 ctggtgcaca actacaagac ccgcgccggt tttagagcta gaaatagcaa gttaaaataa
+      241 ggctagtccg ttatcaactt gaaaaagtgg caccgagtcg gtgctgtcgc cctccttcac
+      301 ctcggcgcgg gtcttgtaaa caaagcacca gtggtctagt ggtagaatag taccctgcca
+      361 cggtacagac ccgggttcga ttcccggctg gtgcacgatg cccttcagct cgatggtttt
+      421 agagctagaa atagcaagtt aaaataaggc tagtccgtta tcaacttgaa aaagtggcac
+      481 cgagtcggtg caacaaagca ccagtggtct agtggtagaa tagtaccctg ccacggtaca
+      541 gacccgggtt cgattcccgg ctggtgcagt ttcgagacct c
+//
