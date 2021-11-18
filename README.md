@@ -40,9 +40,7 @@ Activate Windows Subsystem for Linux (WSL2) by
 - open a command prompt
 - run wsl --set-default-version 2
 
-(Alternatively, WSL2 can be activated directly from the BIOS. )
-
-Next, install [Docker](https://docs.docker.com/desktop/windows/install/) and clone this git repository. With activate docker, open a command prompt and navigate into the cloned repository using dir \<location\>. Execute docker-compose up.
+In the BIOS, enable Visualization tools. Next, install [Docker](https://docs.docker.com/desktop/windows/install/) and clone this git repository. With activate docker, open a command prompt and navigate into the cloned repository using dir \<location\>. Execute docker-compose up.
 
 In the browser, open localhost:5000
   
