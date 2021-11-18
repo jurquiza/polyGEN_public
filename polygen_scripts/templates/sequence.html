@@ -70,27 +70,32 @@
         <label for="enzm_input">Enzyme</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the type II restriction enzyme you want to use for the Golden Gate assembly. This will be important for designing the primers for PCR. The default is BsaI."></span>
         <select name="enzm_input" id="enzm_input" class="form-control" onclick="update()">
+          <option value="bbsi" selected>BbsI</option>
           <option value="bsai">BsaI </option>
           <option value="bsmbi">BsmBI</option>
           <option value="btgzi">BtgZI</option>
-          <option value="bbsi">BbsI</option>
         </select>
       </div>
     </div>
     <script>
       function update() {
-        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
+        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']};
         
-        var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN'
+        var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN';
         
-        document.getElementById("site").innerHTML = res
+        document.getElementById("site").innerHTML = res;
       }
     </script>
     <div class="col-4 d-flex justify-content-center align-items-center">
       <div style="position: relative">
         <p id="site" style="font-family: monospace; letter-spacing: 3px">
-        GA<b>GGTCTC</b>GNNNN <br>
-        CT<b>CCAGAG</b>CNNNN
+        <script>
+          var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']};
+          
+          var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN';
+          
+          document.getElementById("site").innerHTML = res;
+        </script>
         </p>
         <canvas id="DemoCanvas" width="53" height="46" style="position: absolute; top: 0; right: 0;"></canvas>
         <script>  
