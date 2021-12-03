@@ -70,27 +70,32 @@
         <label for="enzm_input">Enzyme</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the type II restriction enzyme you want to use for the Golden Gate assembly. This will be important for designing the primers for PCR. The default is BsaI."></span>
         <select name="enzm_input" id="enzm_input" class="form-control" onclick="update()">
+          <option value="bbsi" selected>BbsI</option>
           <option value="bsai">BsaI </option>
           <option value="bsmbi">BsmBI</option>
           <option value="btgzi">BtgZI</option>
-          <option value="bbsi">BbsI</option>
         </select>
       </div>
     </div>
     <script>
       function update() {
-        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']}
+        var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']};
         
-        var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN'
+        var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN';
         
-        document.getElementById("site").innerHTML = res
+        document.getElementById("site").innerHTML = res;
       }
     </script>
     <div class="col-4 d-flex justify-content-center align-items-center">
       <div style="position: relative">
         <p id="site" style="font-family: monospace; letter-spacing: 3px">
-        GA<b>GGTCTC</b>GNNNN <br>
-        CT<b>CCAGAG</b>CNNNN
+        <script>
+          var enzms = {'bsai': ['GA<b>GGTCTC</b>G', 'CT<b>CCAGAG</b>C'], 'bsmbi': ['TG<b>CGTCTC</b>A', 'AC<b>GCAGAG</b>T'], 'btgzi': ['CT<b>GCGATG</b>GAGTATGTTA', 'GA<b>CGCTAC</b>CTCATACAAT'], 'bbsi': ['TT<b>GAAGAC</b>TT', 'AA<b>CTTCTG</b>AA']};
+          
+          var res = enzms[document.getElementById('enzm_input').value][0] + 'NNNN <br>' + enzms[document.getElementById('enzm_input').value][1] + 'NNNN';
+          
+          document.getElementById("site").innerHTML = res;
+        </script>
         </p>
         <canvas id="DemoCanvas" width="53" height="46" style="position: absolute; top: 0; right: 0;"></canvas>
         <script>  
@@ -171,8 +176,7 @@
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the contents of your polycistron here. The individual parts you specify will be concatenated according to the chosen polycistronic architecture. You may use gRNAs, pegRNAs or arbitrary small RNAs (abbreviated smRNA). First, state the type of RNA, followed by a semicolon and then state the corresponding sequence. Separate several parts by a vertical line. For smRNAs and pegRNAs, provide the entire sequence. For gRNAs, only provide the spacer."></span>
         <p style="font-family: monospace; color: grey">
         Positive example: gRNA;ATAGGCTCCGATCGTGAACC|gRNA;GGAATTTGGCGAGGCCTATT|smRNA;CGTATGGCGTATCGGATTCTAT<br>
-        Negative example: smRNA;TTGAAGTAAATACAAACAGG|gRNA;TTGTATCAAAAATGCAAGCT|gRNA;TTTTAGTAACAATAAGAGAG
-        </p>
+        Negative example: smRNA;TTGAAGTAAATACAAACAGG|gRNA;TTGTATCAAAAATGCAAGCT|gRNA;TTTTAGTAACAATAAGAGAG</p>
         {% if session['PTG_transfer'] %}
             <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC' style="background-color:{{ session['clr']['sequence_spacers'] }}">{{ session['PTG_transfer'] }}</textarea>
         {% else %}
