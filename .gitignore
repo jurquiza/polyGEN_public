@@ -1,0 +1,10 @@
+# Ignore the following directories #
+polygen_scripts/__pycache__/
+polygen_scripts/testing/__pycache__/
+
+# Ignore all files with the following endings #
+.pyc
+
+# Ignore the following files
+log.out
+
