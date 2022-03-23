@@ -72,7 +72,6 @@ def sequence():
             
             ## Preprocessing input and catching input errors. The error catching might be duplicated in the individual functions
             ## but catching the errors earlier saves computing time.
-            print(list(session['PTG_transfer']))
             PTG_input = session['PTG_transfer'].replace(" ", "").replace("\r\n", "").split('|')
             PTG_structure = []
             for element in PTG_input:
