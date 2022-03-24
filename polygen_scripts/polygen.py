@@ -189,6 +189,11 @@ def serve_primers():
     csv += 'Invariable border primers:,' + str(session['staticBorderPrimers']) + '\n'
     csv += 'Omit border primers:,' + str(session['noBorderPrimers']) + '\n'
     
+    csv += '\nSequence input:\n'
+    PTG_input = session['PTG_transfer'].replace(" ", "").replace("\r\n", "").split("|")
+    for part in PTG_input:
+        csv += part.replace(";", ",") + '\n'
+    
     ## Generating the object for the genbank file
     sr = SeqRecord(seq=Seq(session['plcstrn'].sequence, alphabet=IUPAC.ambiguous_dna), name=session['PTG_name'], annotations={'date': date.today().strftime("%d-%b-%Y").upper(), 'topology': 'linear'})
     for ftr in session['plcstrn'].features:
