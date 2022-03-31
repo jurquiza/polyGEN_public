@@ -37,7 +37,7 @@ def sequence():
             session['msg'] = None
             session['poltype'] = request.form["poltype_input"]
             session['enzm'] = request.form['enzm_input']
-            session['PTG_name'] = request.form["PTG_name"]
+            session['PTG_name'] = request.form["PTG_name"].replace(" ", "_")
             session['oligo_prefix'] = request.form["oligo_prefix"]
             session['oligo_index'] = request.form["oligo_index"]
             session['PTG_transfer'] = request.form["sequence_spacers"]
@@ -72,7 +72,7 @@ def sequence():
             
             ## Preprocessing input and catching input errors. The error catching might be duplicated in the individual functions
             ## but catching the errors earlier saves computing time.
-            PTG_input = session['PTG_transfer'].split('|')
+            PTG_input = session['PTG_transfer'].replace(" ", "").replace("\r\n", "").split('|')
             PTG_structure = []
             for element in PTG_input:
                 e = element.split(';')
