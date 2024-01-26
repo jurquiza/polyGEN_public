@@ -175,8 +175,8 @@
         <label for="ControlTextarea1">Polycistron description (required)</label>
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the contents of your polycistron here. The individual parts you specify will be concatenated according to the chosen polycistronic architecture. You may use gRNAs, pegRNAs or arbitrary small RNAs (abbreviated smRNA). First, state the type of RNA, followed by a semicolon and then state the corresponding sequence. Separate several parts by a vertical line. For smRNAs and pegRNAs, provide the entire sequence. For gRNAs, only provide the spacer."></span>
         <p style="font-family: monospace; color: grey">
-        Positive example: gRNA;ATAGGCTCCGATCGTGAACC|gRNA;GGAATTTGGCGAGGCCTATT|smRNA;CGTATGGCGTATCGGATTCTAT<br>
-        Negative example: smRNA;TTGAAGTAAATACAAACAGG|gRNA;TTGTATCAAAAATGCAAGCT|gRNA;TTTTAGTAACAATAAGAGAG</p>
+        This is a functional example: gRNA;ATAGGCTCCGATCGTGAACC|gRNA;GGAATTTGGCGAGGCCTATT|smRNA;CGTATGGCGTATCGGATTCTAT<br>
+        This will produce an error: smRNA;TTGAAGTAAATACAAACAGG|gRNA;TTGTATCAAAAATGCAAGCT|gRNA;TTTTAGTAACAATAAGAGAG</p>
         {% if session['PTG_transfer'] %}
             <textarea class="form-control" name="sequence_spacers" id="ControlTextarea3" rows="5" placeholder='e.g. pegRNA;ATGCATGC|gRNA;ATGCATGC|smRNA;ATGCATGC' style="background-color:{{ session['clr']['sequence_spacers'] }}">{{ session['PTG_transfer'] }}</textarea>
         {% else %}
