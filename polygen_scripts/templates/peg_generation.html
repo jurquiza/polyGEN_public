@@ -16,27 +16,95 @@
   </div>
   <div style="background-color: #EFF5FB; border-radius: 5px; padding: 10px">
   <div class="form-group">
-    <label for="exampleFormControlTextarea1">Sequence to be edited (required)</label>
+    <label for="pegSeq">Sequence to be edited (required)</label>
     <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the sequence you want to edit in 5'&#8594 3' direction. Make sure to include enough sequence around the edit to be used for pegRNA design. A starting point could be ~50 bp to either side."></span>
     {% if PEG_transfer %}
-      <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
+      <textarea class="form-control" name="sequence" id="pegSeq" rows="5"
     placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}">{{ PEG_transfer }}</textarea>
     {% else %}
-      <textarea class="form-control" name="sequence" id="exampleFormControlTextarea1" rows="5"
+      <textarea class="form-control" name="sequence" id="pegSeq" rows="5"
     placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}"></textarea>
     {% endif %}
   </div>
+
   <div class="form-group">
+
+    <div class="row">
+      <div class="col-12">
+        <label>Add modifications individually (optional)</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the type and specifications of modifications you want to add. Each modification will generate one pegRNA. You can specify multiple modifications per pegRNA by separating them with commas. Refer to the 'Learn more' page for details."></span>
+      </div>
+    </div>
+
+    <div class="row mb-2">
+      <div class="col-2">
+        <select id="typeSelector" onchange="changePlaceholder(this.value)">
+          <option value="mut" selected="selected">Mutation</option>
+          <option value="del">Deletion</option>
+          <option value="ins">Insertion</option>
+        </select>
+      </div>
+
+      <div class="col-4">
+        <input type="text" name="editInput1" class="form-control" id="editInput1" placeholder="<Index>">
+      </div>
+
+      <div class="col-4">
+        <input type="text" name="editInput2" class="form-control" id="editInput2" placeholder="<New base>">
+      </div>
+
+      <div class="col-2">
+        <button class="btn btn-secondary" type="button" onclick="addModification()">Add</button>
+      </div>
+
+      <script>
+        function changePlaceholder(val) {
+
+          $('#editInput1').val("");
+          $('#editInput2').val("");
+
+          if(val == "mut") {
+            $('#editInput1').attr('placeholder', "<Index>");
+            $('#editInput2').attr('placeholder', "<New base>");
+          }else if(val == "del") {
+            $('#editInput1').attr('placeholder', "<Start index>");
+            $('#editInput2').attr('placeholder', "<End index>");
+          }else {
+            $('#editInput1').attr('placeholder', "<Index>");
+            $('#editInput2').attr('placeholder', "<Inserted base(s)>");
+          }
+        };
+
+        function addModification() {
+
+        var selectedType = $('#typeSelector').val();
+        var i1 = $('#editInput1').val();
+        var i2 = $('#editInput2').val();
+
+        if ($('#mods').val() == "") {
+          addPipe = "";
+        } else {
+          addPipe = "|";
+        }
+
+          $('#mods').val(function(i, origText){
+            return origText + addPipe + i1 + ";" + i2 + ";" + selectedType;
+          });
+        }
+      </script>
+
+    </div>
+
     <div class="row">
       <div class="col-10">
-        <label for="exampleFormControlInput1">PE edits (required)</label>
-        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the edit you want to perform in the above sequence. You may perform base swaps ('mut'), deletions ('del') or insertions ('ins'). Each type demands three inputs, separated by semicolons: base swaps follow the syntax index;new base;mut, deletions follow the syntax beginning;end;del, insertions follow the syntax index;sequence;ins. Multiple edits on the same sequence must be separated by vertical lines."></span>
-        <input type="text" name="edits" class="form-control" id="exampleFormControlInput2" placeholder="e.g. 28,30,31;A,T,G;mut" value="{{ session['PEG_edits'] }}" style="background-color:{{ session['clr']['edits'] }}">
+        <label for="mods">Modifications (required)</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the edit you want to perform in the above sequence. You may perform base swaps ('mut'), deletions ('del') or insertions ('ins'). Each type demands three inputs, separated by semicolons: base swaps follow the syntax index;new base;mut, deletions follow the syntax beginning;end;del, insertions follow the syntax index;sequence;ins. Multiple edits on the same sequence must be separated by vertical lines. Refer to the 'Learn more' page for details."></span>
+        <input type="text" name="edits" class="form-control" id="mods" placeholder="e.g. 28,30,31;A,T,G;mut" value="{{ session['PEG_edits'] }}" style="background-color:{{ session['clr']['edits'] }}">
       </div>
       <div class="col-2">
-        <label for="exampleFormControlInput2">PE mode</label>
-        <span class="fa fa-info-circle" data-toggle='tooltip' title="You can choose between the two Primer Editor modes PE2 and PE3. In addition to the conventional pegRNA, PE3 also utilizes a gRNA to nick the edited strand, guiding the endogenous repair machinery to incorporate the edit into the genome with a higher likelihood."></span>
-        <select id="mode" name="mode">
+        <label for="PEmode">PE mode</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="You can choose between the two Primer Editor modes PE2 and PE3. In addition to the conventional pegRNA, PE3 also utilizes a gRNA to nick the edited strand, guiding the endogenous repair machinery to incorporate the edit into the genome with a higher likelihood."></span><br>
+        <select name="mode" id="PEmode">
           <option value="PE2">PE2</option>
           <option value="PE3" selected="selected">PE3</option>
         </select>
