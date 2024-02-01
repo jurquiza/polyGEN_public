@@ -22,11 +22,11 @@
         <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the sequence you want to edit in 5'&#8594 3' direction. Make sure to include enough sequence around the edit to be used for pegRNA design. A starting point could be ~50 bp to either side."></span>
       </div>
 
-      <div class="col-2 text-right">
+      <div class="col-2">
         <button class="btn btn-secondary" type="button" onclick="uploadFasta()">Upload fasta</button>
       </div>
 
-      <div class="col-2 text-right">
+      <div class="col-2">
         <button class="btn btn-secondary" type="button" onclick="addExample()">Example</button>
       </div>
     </div>
@@ -93,7 +93,14 @@
   <div class="row">
     <div class="col">
       <div class="form-group">
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" name="submitPEG" class="btn btn-primary" value="submit">Submit</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <div class="text-right">
+          <button type="submit" name="submitPEG" class="btn btn-outline-secondary" value="reset" style="background-color: #FFFFFF">Reset</button>
+        </div>
       </div>
     </div>
   </div>
