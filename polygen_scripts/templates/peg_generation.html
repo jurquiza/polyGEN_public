@@ -7,24 +7,39 @@
 <form action='#' method='post'>
   <div class="row">
     <div class="col">
-    <div class="text-center">
-      {% if session['msg'] %}
-        <p style="color: #FA5858; font-weight:bold">{{ session['msg'] }}</p>
-      {% endif %}
-    </div>
+      <div class="text-center">
+        {% if session['msg'] %}
+          <p style="color: #FA5858; font-weight:bold">{{ session['msg'] }}</p>
+        {% endif %}
+      </div>
     </div>
   </div>
   <div style="background-color: #EFF5FB; border-radius: 5px; padding: 10px">
   <div class="form-group">
-    <label for="pegSeq">Sequence to be edited (required)</label>
-    <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the sequence you want to edit in 5'&#8594 3' direction. Make sure to include enough sequence around the edit to be used for pegRNA design. A starting point could be ~50 bp to either side."></span>
-    {% if PEG_transfer %}
-      <textarea class="form-control" name="sequence" id="pegSeq" rows="5"
-    placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}">{{ PEG_transfer }}</textarea>
-    {% else %}
-      <textarea class="form-control" name="sequence" id="pegSeq" rows="5"
-    placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}"></textarea>
-    {% endif %}
+    <div class="row mb-2">
+      <div class="col-8">
+        <label for="pegSeq">Sequence to be edited (required)</label>
+        <span class="fa fa-info-circle" data-toggle='tooltip' title="Specify the sequence you want to edit in 5'&#8594 3' direction. Make sure to include enough sequence around the edit to be used for pegRNA design. A starting point could be ~50 bp to either side."></span>
+      </div>
+
+      <div class="col-2 text-right">
+        <button class="btn btn-secondary" type="button" onclick="uploadFasta()">Upload fasta</button>
+      </div>
+
+      <div class="col-2 text-right">
+        <button class="btn btn-secondary" type="button" onclick="addExample()">Example</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        {% if PEG_transfer %}
+          <textarea class="form-control" name="sequence" id="pegSeq" rows="5" placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}">{{ PEG_transfer }}</textarea>
+        {% else %}
+          <textarea class="form-control" name="sequence" id="pegSeq" rows="5" placeholder='e.g. 100 bp sequence' style="background-color:{{ session['clr']['sequence'] }}"></textarea>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
   <div class="form-group">
@@ -57,42 +72,6 @@
         <button class="btn btn-secondary" type="button" onclick="addModification()">Add</button>
       </div>
 
-      <script>
-        function changePlaceholder(val) {
-
-          $('#editInput1').val("");
-          $('#editInput2').val("");
-
-          if(val == "mut") {
-            $('#editInput1').attr('placeholder', "<Index>");
-            $('#editInput2').attr('placeholder', "<New base>");
-          }else if(val == "del") {
-            $('#editInput1').attr('placeholder', "<Start index>");
-            $('#editInput2').attr('placeholder', "<End index>");
-          }else {
-            $('#editInput1').attr('placeholder', "<Index>");
-            $('#editInput2').attr('placeholder', "<Inserted base(s)>");
-          }
-        };
-
-        function addModification() {
-
-        var selectedType = $('#typeSelector').val();
-        var i1 = $('#editInput1').val();
-        var i2 = $('#editInput2').val();
-
-        if ($('#mods').val() == "") {
-          addPipe = "";
-        } else {
-          addPipe = "|";
-        }
-
-          $('#mods').val(function(i, origText){
-            return origText + addPipe + i1 + ";" + i2 + ";" + selectedType;
-          });
-        }
-      </script>
-
     </div>
 
     <div class="row">
@@ -121,5 +100,47 @@
   </div>
 </form>
 </div>
+
+<script>
+  function changePlaceholder(val) {
+
+    $('#editInput1').val("");
+    $('#editInput2').val("");
+
+    if(val == "mut") {
+      $('#editInput1').attr('placeholder', "<Index>");
+      $('#editInput2').attr('placeholder', "<New base>");
+    }else if(val == "del") {
+      $('#editInput1').attr('placeholder', "<Start index>");
+      $('#editInput2').attr('placeholder', "<End index>");
+    }else {
+      $('#editInput1').attr('placeholder', "<Index>");
+      $('#editInput2').attr('placeholder', "<Inserted base(s)>");
+    }
+  };
+
+  function addModification() {
+
+    var selectedType = $('#typeSelector').val();
+    var i1 = $('#editInput1').val();
+    var i2 = $('#editInput2').val();
+
+    if ($('#mods').val() == "") {
+      addPipe = "";
+    } else {
+      addPipe = "|";
+    }
+
+    $('#mods').val(function(i, origText){
+      return origText + addPipe + i1 + ";" + i2 + ";" + selectedType;
+    });
+  };
+
+  function addExample() {
+
+    $('#pegSeq').val("gcgccgtctcgctcgaatggtgagcaagggcgaggagctgttcaccggggtggtgcccatcctggtcgagctggacggcgacgtaaacggccacaagttcagcgtgtccggcgagggcgagggcgatgccacctacggcaagctgaccctgaagttcatctgcaccaccggcaagctgcccgtgccctggcccaccctcgtgaccaccctgacccatggcgtgcagtgcttcagccgctaccccgaccacatgaagcagcacgacttcttcaagtccgccatgcccgaaggctacgtccaggagcgcaccatcttcttcaaggacgacggcaactacaagacccgcgccgaggtgaagttcgagggcgacaccctggtgaaccgcatcgagctgaagggcatcgacttcaaggaggacggcaacatcctggggcacaagctggagtacaactacaacagccacaacgtctatatcatggccgacaagcagaagaacggcatcaaggtgaacttcaagatccgccacaacatcgaggacggcagcgtgcagctcgccgaccactaccagcagaacacccccatcggcgacggccccgtgctgctgcccgacaaccactacctgagcacccagtccaagctgagcaaagaccccaacgagaagcgcgatcacatggtcctgctggagttcgtgaccgccgccgggatcactctcggcatggacgagctgtacaagtaagctttgagcgagacggcgc");
+
+  }
+</script>
 
 {% endblock %}
