@@ -139,6 +139,11 @@ def peg_generation():
             PEG_mode = request.form["mode"]
 
             ## Preprocessing input
+            # Clean up whitespaces and newlines in sequence
+            session['PEG_sequence'] = session['PEG_sequence'].replace(' ', '')
+            session['PEG_sequence'] = session['PEG_sequence'].replace('\r\n', '')
+
+            # Concatenate edits
             PEG_edits = session['PEG_edits'].split('|')
             pegs_list = []
             for edt in PEG_edits:
