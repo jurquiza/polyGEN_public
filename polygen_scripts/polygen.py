@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, render_template, request, Response, send_from_directory
-from io import BytesIO
+from io import BytesIO, StringIO
 from zipfile import ZipFile
 from datetime import date,time
 import os, tempfile
@@ -31,7 +31,7 @@ def sequence():
     
     if request.method == "POST":
         
-        if request.form['submit_button'] == 'submit':
+        if request.form['submitPTG'] == 'submit':
             
             ## Pulling all input from the page
             session['msg'] = None
@@ -113,7 +113,7 @@ def sequence():
             
             
         ## If the reset button is pressed, erase all input
-        elif request.form['submit_button'] == 'reset':
+        elif request.form['submitPTG'] == 'reset':
             session['PTG_name'] = session['oligo_prefix'] = session['oligo_index'] = session['bb_linkers'] = session['ad_linkers'] = session['PTG_transfer'] = ''
             return render_template("sequence.html",PTG_transfer=session.get('PTG_transfer', None), session=session)
             
@@ -130,30 +130,56 @@ def peg_generation():
     session['clr'] = {'sequence': '#FFFFFF', 'edits': '#FFFFFF'}
 
     if request.method == "POST":
-        
-        ## Pulling all inputs from page
-        session['PEG_sequence'] = request.form["sequence"]
-        session['PEG_edits'] = request.form["edits"]
-        PEG_mode = request.form["mode"]
-        
-        ## Preprocessing input
-        PEG_edits = session['PEG_edits'].split('|')
-        pegs_list = []
-        for edt in PEG_edits:
-            pegs_list.append(edt.split(';'))
 
-        ## Running inputs through engine function
-        edits_list,session['msg'] = pegbldr(session['PEG_sequence'], pegs_list, PEG_mode)
-        
-        ## Postprocessing output
-        session['PTG_transfer'] = ''
-        for c,peg in enumerate(edits_list):
-            session['PTG_transfer'] += str(peg[1]) + ';' +  str(peg[2])
-            if c < len(edits_list)-1:
-                session['PTG_transfer'] += '|'
+        if 'file' in request.files:
 
-        return redirect(url_for('sequence'))
+            file = request.files['file'] # Retrieve file
+            fileFormat = file.filename.split(".")[-1] # Retrieve file format
+            stringio = StringIO(file.getvalue().decode("utf-8")) # Decode file
+            record = SeqIO.read(stringio, fileFormat) # Read file
+            session['PEG_sequence'] = str(record.seq) # Extract and save sequence
+
+            return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)
+
+        if request.form['submitPEG'] == 'submit':
         
+            ## Pulling all inputs from page
+            session['PEG_sequence'] = request.form["sequence"]
+            session['PEG_edits'] = request.form["edits"]
+            PEG_mode = request.form["mode"]
+
+            ## Preprocessing input
+            # Clean up whitespaces and newlines in sequence
+            session['PEG_sequence'] = session['PEG_sequence'].replace(' ', '')
+            session['PEG_sequence'] = session['PEG_sequence'].replace('\r\n', '')
+
+            # Concatenate edits
+            PEG_edits = session['PEG_edits'].split('|')
+            pegs_list = []
+            for edt in PEG_edits:
+                pegs_list.append(edt.split(';'))
+
+            ## Running inputs through engine function
+            edits_list,session['msg'] = pegbldr(session['PEG_sequence'], pegs_list, PEG_mode)
+
+            ## Postprocessing output
+            session['PTG_transfer'] = ''
+            for c,peg in enumerate(edits_list):
+                session['PTG_transfer'] += str(peg[1]) + ';' +  str(peg[2])
+                if c < len(edits_list)-1:
+                    session['PTG_transfer'] += '|'
+
+            return redirect(url_for('sequence'))
+
+        ## If the reset button is pressed, erase all input
+        elif request.form['submitPEG'] == 'reset':
+            session['PEG_sequence'] = session['PEG_edits'] = ''
+            return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)
+
+        else:
+
+            return render_template("main.html")
+
     else:
         
         return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)

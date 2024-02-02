@@ -19,13 +19,13 @@ class TestWebApplication(unittest.TestCase):
     def postPTG(self, poltype_input, enzm_input, PTG_name, oligo_prefix, oligo_index, sequence_spacers, bb_linkers, ad_linkers, min_temp, max_temp, staticBorderPrimers=False, noBorderPrimers=False):
         
         if staticBorderPrimers:
-            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp, staticBorderPrimers=staticBorderPrimers), follow_redirects=True)
+            return self.app.post('/ptg', data=dict(submitPTG='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp, staticBorderPrimers=staticBorderPrimers), follow_redirects=True)
         
         elif noBorderPrimers:
-            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp, noBorderPrimers=noBorderPrimers), follow_redirects=True)
+            return self.app.post('/ptg', data=dict(submitPTG='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp, noBorderPrimers=noBorderPrimers), follow_redirects=True)
         
         else: 
-            return self.app.post('/ptg', data=dict(submit_button='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp), follow_redirects=True)
+            return self.app.post('/ptg', data=dict(submitPTG='submit', poltype_input=poltype_input, enzm_input=enzm_input, PTG_name=PTG_name, oligo_prefix=oligo_prefix, oligo_index=oligo_index, sequence_spacers=sequence_spacers, bb_linkers=bb_linkers, ad_linkers=ad_linkers, min_temp=min_temp, max_temp=max_temp), follow_redirects=True)
     
     def test_scarlessgg_test0_gRNAs_flask(self):
         self.postPTG(poltype_input='ptg', 
