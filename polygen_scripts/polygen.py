@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, render_template, request, Response, send_from_directory
-from io import BytesIO
+from io import BytesIO, StringIO
 from zipfile import ZipFile
 from datetime import date,time
 import os, tempfile
@@ -131,6 +131,16 @@ def peg_generation():
 
     if request.method == "POST":
 
+        if 'file' in request.files:
+
+            file = request.files['file'] # Retrieve file
+            fileFormat = file.filename.split(".")[-1] # Retrieve file format
+            stringio = StringIO(file.getvalue().decode("utf-8")) # Decode file
+            record = SeqIO.read(stringio, fileFormat) # Read file
+            session['PEG_sequence'] = str(record.seq) # Extract and save sequence
+
+            return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)
+
         if request.form['submitPEG'] == 'submit':
         
             ## Pulling all inputs from page
@@ -165,6 +175,10 @@ def peg_generation():
         elif request.form['submitPEG'] == 'reset':
             session['PEG_sequence'] = session['PEG_edits'] = ''
             return render_template("peg_generation.html", PEG_transfer=session.get('PEG_sequence', None), session=session)
+
+        else:
+
+            return render_template("main.html")
 
     else:
         
